@@ -5,11 +5,35 @@
 #Author: Jez Swann
 #Date: April 2019
 #Tutorial: http://blog.luisrei.com/articles/flaskrest.html
+#Mongo JSON conversion adapted from https://gist.github.com/akhenakh/2954605
 
 import logging
-from flask import Flask, url_for, jsonify, request
+from flask import Flask, url_for, request
+try:
+    import simplejson as json
+except ImportError:
+    try:
+        import json
+    except ImportError:
+        raise ImportError
+import datetime
+from bson.objectid import ObjectId
+from werkzeug import Response
 
 from runsInfo import *
+
+class MongoJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        elif isinstance(obj, ObjectId):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
+
+def jsonify(*args, **kwargs):
+    """ jsonify with support for MongoDB ObjectId
+    """
+    return Response(json.dumps(dict(*args, **kwargs), cls=MongoJsonEncoder), mimetype='application/json')
 
 def setup_logging():
     logger = logging.getLogger("api")
@@ -32,10 +56,16 @@ def api_root():
 	rs = [1,'Welcome to Nanopore Manager APIs']	
 	return generateResponse(rs,200) 
 
+@app.route('/runs/',methods = ['GET'])
+def getRuns():
+	rs = [1, runsInfo().getRuns()]
+	return generateResponse(rs,200) 
+
 @app.route('/runs/getLiveStats',methods = ['GET'])
 def getLiveStats():
 	rs = [1, runsInfo().getLiveStats()]
 	return generateResponse(rs,200) 
+
 
 #input: result is an array
 #result[0] = 0 for OK -- else for error 

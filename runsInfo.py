@@ -32,7 +32,7 @@ class runsInfo:
         return df[df.Submittedtime > td]
 
     def getRuns(self):
-        return self.df
+        return self.df.sort_values(by=['starttime'],ascending=False).to_dict('index')
 
     def getRunStatRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getLiveStats()
