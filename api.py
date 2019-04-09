@@ -56,7 +56,7 @@ def api_root():
 	rs = [1,'Welcome to Nanopore Manager APIs']	
 	return generateResponse(rs,200) 
 
-@app.route('/runs/',methods = ['GET'])
+@app.route('/runs',methods = ['GET'])
 def getRuns():
 	rs = [1, runsInfo().getRuns()]
 	return generateResponse(rs,200) 

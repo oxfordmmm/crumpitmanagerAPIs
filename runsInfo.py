@@ -24,6 +24,17 @@ class runsInfo:
         df=df.transpose()
         self.df=df.sort_values(by=['starttime'],ascending=False)
 
+    def getRuns(self):
+        allRuns = self.df.sort_values(by=['starttime'],ascending=False)
+        df = allRuns.apply(self.getRunRows,axis=1)
+        return df.to_dict('index')
+
+    def getRunRows(self, r: pd.Series):
+        rs=runInfo(r.to_dict()).getStats()
+        r['finishTime']=rs["finishTime"]
+        r['finishingTime']=rs["finishingTime"]
+        return r
+
     def getLiveRuns(self, timeFrame: int=7):
         if timeFrame > 0:
             df=self.df[self.df.status == 'Running']
@@ -31,10 +42,7 @@ class runsInfo:
             td=now-datetime.timedelta(days=timeFrame)
         return df[df.Submittedtime > td]
 
-    def getRuns(self):
-        return self.df.sort_values(by=['starttime'],ascending=False).to_dict('index')
-
-    def getRunStatRows(self, r: pd.Series):
+    def getLiveRunRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getLiveStats()
         r['batches']=rs["batch_number"]
         r['f5s']=rs["f5_numbers"]
@@ -43,7 +51,7 @@ class runsInfo:
 
     def getLiveStats(self):
         liveRuns = self.getLiveRuns()
-        df = liveRuns.apply(self.getRunStatRows,axis=1)
+        df = liveRuns.apply(self.getLiveRunRows,axis=1)
         try:
             df=df[['Submittedtime','batches','f5s','percent complete','cwd']]
         except:

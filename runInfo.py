@@ -6,6 +6,23 @@ class runInfo:
     def __init__(self,run: dict):
         self.run=run
 
+    def getStats(self):
+        try:
+            finishTime = self.run["Finishtime"]
+        except:
+            finishTime = ""
+
+        try:
+            finishingTime = self.run["Finishingtime"]
+        except:
+            finishingTime = ""
+
+        output = { 
+            "finishTime" : finishTime,
+            "finishingTime" : finishingTime
+        }
+        return output
+
     def getLiveStats(self):
         try:
             batches=os.listdir('{0}/all_batches/'.format(self.run['cwd']))
