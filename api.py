@@ -8,7 +8,7 @@
 #Mongo JSON conversion adapted from https://gist.github.com/akhenakh/2954605
 
 import logging
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, send_file
 try:
     import simplejson as json
 except ImportError:
@@ -61,7 +61,16 @@ def getRuns():
 	rs = [1, runsInfo().getRuns()]
 	return generateResponse(rs,200) 
 
-@app.route('/runs/getLiveStats',methods = ['GET'])
+@app.route('/runs/graph',methods = ['GET'])
+def getRunsGraph():
+    filename = runsInfo().getRunsGraph()
+    if isinstance(filename, str):
+	    return send_file(filename, mimetype='image/png')
+    else:
+        rs = [0, "Could not create Image"]
+        generateResponse(rs)
+
+@app.route('/runs/liveStats',methods = ['GET'])
 def getLiveStats():
 	rs = [1, runsInfo().getLiveStats()]
 	return generateResponse(rs,200) 
