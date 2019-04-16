@@ -7,8 +7,10 @@
 #Tutorial: http://blog.luisrei.com/articles/flaskrest.html
 #Mongo JSON conversion adapted from https://gist.github.com/akhenakh/2954605
 
+import base64
+
 import logging
-from flask import Flask, url_for, request, send_file
+from flask import Flask, url_for, request
 try:
     import simplejson as json
 except ImportError:
@@ -65,10 +67,18 @@ def getRuns():
 def getRunsGraph():
     filename = runsInfo().getRunsGraph()
     if isinstance(filename, str):
-	    return send_file(filename, mimetype='image/png')
+        runGraph = open(filename, 'rb')
+        image_read = runGraph.read()
+        image_64_encode = base64.encodestring(image_read)
+        image_64_string = image_64_encode.decode('utf-8')
+        imageDict = {
+            "image" : image_64_string
+        }
+        rs = [1, imageDict]
+        return generateResponse(rs, 200)
     else:
         rs = [0, "Could not create Image"]
-        generateResponse(rs)
+        return generateResponse(rs)
 
 @app.route('/runs/liveStats',methods = ['GET'])
 def getLiveStats():
