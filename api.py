@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-#RESTful API services for NanoporeManager
+#RESTful API services for crumpitManager
 #
 #Author: Jez Swann
 #Date: April 2019
@@ -55,7 +55,7 @@ app = Flask(__name__)
 
 @app.route('/',methods = ['GET'])
 def api_root():
-	rs = [1,'Welcome to Nanopore Manager APIs']	
+	rs = [1,'Welcome to crumpit Manager APIs']	
 	return generateResponse(rs,200) 
 
 @app.route('/runs',methods = ['GET'])
