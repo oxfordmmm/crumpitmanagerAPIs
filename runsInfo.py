@@ -44,7 +44,9 @@ class runsInfo:
 
     def getRuns(self):
         allRuns = self.df.sort_values(by=['starttime'],ascending=False)
+        print(allRuns)
         df = allRuns.apply(self.__getRunRows,axis=1)
+        print(df)
         return df.to_dict('index')
 
     def getRunsGraph(self):
@@ -54,14 +56,10 @@ class runsInfo:
         df = df.resample('W', on='Finishtime').sum()
         #df = pd.read_csv('actualRunMongo.csv', index_col=0, parse_dates=True)
 
-        imgFilename = ""
-        try:
-            ax = df.plot()
-            fig = ax.get_figure()
-            fig.savefig("temp.png")
-            imgFilename = "temp.png"
-        except:
-            imgFilename = -1
+        ax = df.plot()
+        fig = ax.get_figure()
+        fig.savefig("temp.png")
+        imgFilename = "temp.png"
         return imgFilename
 
     def getLiveRuns(self, timeFrame: int=7):

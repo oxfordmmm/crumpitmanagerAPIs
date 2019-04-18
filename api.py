@@ -65,20 +65,25 @@ def getRuns():
 
 @app.route('/runs/graph',methods = ['GET'])
 def getRunsGraph():
-    filename = runsInfo().getRunsGraph()
-    if isinstance(filename, str):
-        runGraph = open(filename, 'rb')
-        image_read = runGraph.read()
-        image_64_encode = base64.encodestring(image_read)
-        image_64_string = image_64_encode.decode('utf-8')
-        imageDict = {
-            "image" : image_64_string
-        }
-        rs = [1, imageDict]
-        return generateResponse(rs, 200)
-    else:
+    try:
+        filename = runsInfo().getRunsGraph()
+        if isinstance(filename, str):
+            runGraph = open(filename, 'rb')
+            image_read = runGraph.read()
+            image_64_encode = base64.encodestring(image_read)
+            image_64_string = image_64_encode.decode('utf-8')
+            imageDict = {
+                "image" : image_64_string
+            }
+            rs = [1, imageDict]
+            return generateResponse(rs, 200)
+        else:
+            rs = [0, "Could not create Image"]
+            return generateResponse(rs, 500)
+    except Exception as e:
+        logger.debug(str(e))
         rs = [0, "Could not create Image"]
-        return generateResponse(rs)
+        return generateResponse(rs, 500)
 
 @app.route('/runs/liveStats',methods = ['GET'])
 def getLiveStats():
