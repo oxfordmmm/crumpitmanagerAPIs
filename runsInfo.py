@@ -44,9 +44,7 @@ class runsInfo:
 
     def getRuns(self):
         allRuns = self.df.sort_values(by=['starttime'],ascending=False)
-        print(allRuns)
         df = allRuns.apply(self.__getRunRows,axis=1)
-        print(df)
         return df.to_dict('index')
 
     def getRunsGraph(self):
