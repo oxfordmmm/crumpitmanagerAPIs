@@ -1,5 +1,10 @@
 #! /usr/bin/python3
 
+#Functionality to give information about a specific run
+#
+#Author: Jez Swann
+#Date: May 2019
+
 import os
 
 class runInfo:

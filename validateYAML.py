@@ -1,3 +1,10 @@
+#! /usr/bin/python3
+
+#Functionality to validate YAML
+#
+#Author: Jez Swann
+#Date: May 2019
+
 import cerberus
 import yaml
 

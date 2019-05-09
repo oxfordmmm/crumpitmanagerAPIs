@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#! /usr/bin/python3
+
+#Functionality to give information about CRUMPIT runs 
+#
+#Author: Jez Swann
+#Date: May 2019
+
 import sys
 import os
 import datetime

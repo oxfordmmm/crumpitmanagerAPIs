@@ -1,3 +1,10 @@
+#! /usr/bin/python3
+
+#Functionality to for reading and using config file
+#
+#Author: Jez Swann
+#Date: May 2019
+
 import os
 import subprocess
 import pathlib
