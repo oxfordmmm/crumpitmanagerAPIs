@@ -13,14 +13,14 @@ class clusterInfo:
         splitLine = currentline.split('-')
 
         stepResult = {}
-        stepResult['result'] = splitLine[-1].strip('() \n')
-        if stepResult['result'] == '1' or stepResult['result'] == '2':
+        stepResult['result'] = int(splitLine[-1].strip('() \n'))
+        if stepResult['result'] == 1 or stepResult['result'] == 2:
             stepResult['step'] = splitLine[-4].strip()
         else:
             stepResult['step'] = splitLine[-3].strip()
 
         currentline = fileStream.readline()
-        if stepResult['result'] == '0' and currentline:
+        if stepResult['result'] == 0 and currentline:
             lineLen = len(currentline.strip())
             while len(currentline.strip()) != 0 and currentline:
                 currentline = fileStream.readline()
