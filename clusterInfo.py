@@ -61,7 +61,7 @@ class clusterInfo:
 
         return gridDict
 
-    def getBackupInfo(self, logDir: str=""):
+    def getBackupInfo(self, logDir: str="", dbRuns: dict={}):
         runStatusDict = {}
         if os.path.exists(logDir):
             # Find most recent log
@@ -74,4 +74,10 @@ class clusterInfo:
                 runStatusDict.update(gridDict)
         else:
             print("Error: Could not find Live Stats")
+
+        if len(dbRuns) > 0:
+            for run in runStatusDict.keys():
+                if run in dbRuns:
+                    runStatusDict[run]['starttime'] = dbRuns[run]['starttime']
+
         return runStatusDict

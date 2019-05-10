@@ -104,7 +104,8 @@ def getLiveStats():
 
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():
-    rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'))]
+    dbRuns = runsInfo().getRuns()
+    rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns)]
     return generateResponse(rs,200) 
 
 #input: result is an array
