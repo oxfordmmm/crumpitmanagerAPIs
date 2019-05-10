@@ -44,8 +44,8 @@ class runsInfo:
 
     def __getRunRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getStats()
-        r['finishTime']=rs["finishTime"]
-        r['finishingTime']=rs["finishingTime"]
+        r['Finishtime']=rs["Finishtime"]
+        r['Finishingtime']=rs["Finishingtime"]
         return r
 
     def getRuns(self):

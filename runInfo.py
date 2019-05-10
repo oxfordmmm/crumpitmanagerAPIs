@@ -23,8 +23,8 @@ class runInfo:
             finishingTime = ""
 
         output = { 
-            "finishTime" : finishTime,
-            "finishingTime" : finishingTime
+            "Finishtime" : str(finishTime),
+            "Finishingtime" : str(finishingTime)
         }
         return output
 
