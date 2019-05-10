@@ -29,7 +29,10 @@ class runsInfo:
         self.collection = self.db.gridRuns
         hce=self.collection.find()
         log={}
-        for h in hce: log[h['run_name']]=h
+        for h in hce: 
+            log[h['run_name']]=h
+            if log[h['run_name']]['PID'] == 'fake':
+                log[h['run_name']]['PID'] = -1
         
         df=pd.DataFrame(log)
         df=df.transpose()
@@ -54,7 +57,7 @@ class runsInfo:
         return df.to_dict('index')
 
     def getRunsGraph(self):
-        df=self.df[(self.df['PID'] != 'fake') & (self.df['Finishtime'] != 'NaN')]
+        df=self.df[(self.df['PID'] != -1) & (self.df['Finishtime'] != 'NaN')]
         df['runcount'] = 1
         df.Finishtime = pd.to_datetime(df.Finishtime) - pd.to_timedelta(7, unit='D')
         df = df.resample('W', on='Finishtime').sum()
