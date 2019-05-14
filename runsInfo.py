@@ -29,10 +29,14 @@ class runsInfo:
         self.collection = self.db.gridRuns
         hce=self.collection.find()
         log={}
-        for h in hce: 
-            log[h['run_name']]=h
-            if log[h['run_name']]['PID'] == 'fake':
-                log[h['run_name']]['PID'] = -1
+        for h in hce:
+            try:
+                log[h['run_name']]=h
+                if log[h['run_name']]['PID'] == 'fake':
+                    log[h['run_name']]['PID'] = -1
+            except Exception as e:
+                print("Error: Could not load run")
+                print(e)
         
         df=pd.DataFrame(log)
         df=df.transpose()
