@@ -3,11 +3,12 @@
 #RESTful API services for crumpitManager
 #
 #Author: Jez Swann
-#Date: April 2019
+#Date: May 2019
 #Tutorial: http://blog.luisrei.com/articles/flaskrest.html
 #Mongo JSON conversion adapted from https://gist.github.com/akhenakh/2954605
 
 import base64
+import pathlib
 
 import logging
 from flask import Flask, url_for, request
@@ -22,7 +23,9 @@ import datetime
 from bson.objectid import ObjectId
 from werkzeug import Response
 
+import config
 from runsInfo import *
+from clusterInfo import *
 
 class MongoJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -47,21 +50,30 @@ def setup_logging():
     logger.addHandler(f_handler)
     logger.addHandler(c_handler)
 
+def reload_cfg():
+    global configFile
+    global cfg
+    configFile = pathlib.Path("configs/config.yaml")
+
+    cfg = config.Config()
+    cfg.load(str(configFile))
+
 setup_logging()
 logger = logging.getLogger('api')
 logger.debug("Logging initialized")
+reload_cfg()
 
 app = Flask(__name__)
 
 @app.route('/',methods = ['GET'])
 def api_root():
-	rs = [1,'Welcome to crumpit Manager APIs']	
-	return generateResponse(rs,200) 
+    rs = [1,'Welcome to crumpit Manager APIs']	
+    return generateResponse(rs,200) 
 
 @app.route('/runs',methods = ['GET'])
 def getRuns():
-	rs = [1, runsInfo().getRuns()]
-	return generateResponse(rs,200) 
+    rs = [1, runsInfo().getRuns()]
+    return generateResponse(rs,200) 
 
 @app.route('/runs/graph',methods = ['GET'])
 def getRunsGraph():
@@ -87,27 +99,32 @@ def getRunsGraph():
 
 @app.route('/runs/liveStats',methods = ['GET'])
 def getLiveStats():
-	rs = [1, runsInfo().getLiveStats()]
-	return generateResponse(rs,200) 
+    rs = [1, runsInfo().getLiveStats()]
+    return generateResponse(rs,200) 
 
+@app.route('/backups',methods = ['GET'])
+def getRunBackups():
+    dbRuns = runsInfo().getRuns()
+    rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns)]
+    return generateResponse(rs,200) 
 
 #input: result is an array
 #result[0] = 0 for OK -- else for error 
 #result[1] = data or error message
 #Status code list = http://www.flaskapi.org/api-guide/status-codes/
 def generateResponse(result, statusCode = None):
-	if statusCode is None:
-		if result[0] == 0:
-			statusCode = 200
-		else:
-			statusCode = 500
+    if statusCode is None:
+        if result[0] == 0:
+            statusCode = 200
+        else:
+            statusCode = 500
 
-	rs = {}
-	rs["status"] = result[0]	
-	rs["data"] = result[1]
-	resp = jsonify(rs)
-	resp.status_code = statusCode		
-	return resp
+    rs = {}
+    rs["status"] = result[0]	
+    rs["data"] = result[1]
+    resp = jsonify(rs)
+    resp.status_code = statusCode		
+    return resp
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5607)

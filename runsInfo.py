@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#! /usr/bin/python3
+
+#Functionality to give information about CRUMPIT runs 
+#
+#Author: Jez Swann
+#Date: May 2019
+
 import sys
 import os
 import datetime
@@ -23,7 +29,10 @@ class runsInfo:
         self.collection = self.db.gridRuns
         hce=self.collection.find()
         log={}
-        for h in hce: log[h['run_name']]=h
+        for h in hce: 
+            log[h['run_name']]=h
+            if log[h['run_name']]['PID'] == 'fake':
+                log[h['run_name']]['PID'] = -1
         
         df=pd.DataFrame(log)
         df=df.transpose()
@@ -38,19 +47,17 @@ class runsInfo:
 
     def __getRunRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getStats()
-        r['finishTime']=rs["finishTime"]
-        r['finishingTime']=rs["finishingTime"]
+        r['Finishtime']=rs["Finishtime"]
+        r['Finishingtime']=rs["Finishingtime"]
         return r
 
     def getRuns(self):
         allRuns = self.df.sort_values(by=['starttime'],ascending=False)
-        print(allRuns)
         df = allRuns.apply(self.__getRunRows,axis=1)
-        print(df)
         return df.to_dict('index')
 
     def getRunsGraph(self):
-        df=self.df[(self.df['PID'] != 'fake') & (self.df['Finishtime'] != 'NaN')]
+        df=self.df[(self.df['PID'] != -1) & (self.df['Finishtime'] != 'NaN')]
         df['runcount'] = 1
         df.Finishtime = pd.to_datetime(df.Finishtime) - pd.to_timedelta(7, unit='D')
         df = df.resample('W', on='Finishtime').sum()
