@@ -20,7 +20,7 @@ from pymongo import MongoClient
 from runInfo import *
 
 class runsInfo:
-    def __init__(self,ip='127.0.0.1',port=27017):
+    def __init__(self,ip: str='127.0.0.1',port: int=27017):
         self.__client = MongoClient(ip, port)
         self.loadtable()
 

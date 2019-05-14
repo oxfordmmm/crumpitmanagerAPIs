@@ -58,6 +58,18 @@ def reload_cfg():
     cfg = config.Config()
     cfg.load(str(configFile))
 
+def getRunsInfo():
+    try:
+        mongoDBcfg = cfg.get('mongoDB')
+    except Exception as e:
+        return runsInfo()       
+    try:
+        mongoDBcfg['port']
+    except Exception as e:    
+        return runsInfo(mongoDBcfg['ip'])
+    
+    return runsInfo(mongoDBcfg['ip'], mongoDBcfg['port'])
+
 setup_logging()
 logger = logging.getLogger('api')
 logger.debug("Logging initialized")
@@ -72,13 +84,25 @@ def api_root():
 
 @app.route('/runs',methods = ['GET'])
 def getRuns():
-    rs = [1, runsInfo().getRuns()]
+    try:
+        rs = [1, getRunsInfo().getRuns()]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to mongo db"]
+
     return generateResponse(rs,200) 
 
 @app.route('/runs/graph',methods = ['GET'])
 def getRunsGraph():
     try:
-        filename = runsInfo().getRunsGraph()
+        runInfo = getRunsInfo()
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to mongo db"]
+        return generateResponse(rs, 200)
+
+    try:
+        filename = getRunsInfo().getRunsGraph()
         if isinstance(filename, str):
             runGraph = open(filename, 'rb')
             image_read = runGraph.read()
@@ -99,12 +123,17 @@ def getRunsGraph():
 
 @app.route('/runs/liveStats',methods = ['GET'])
 def getLiveStats():
-    rs = [1, runsInfo().getLiveStats()]
-    return generateResponse(rs,200) 
+    try:
+        rs = [1, getRunsInfo().getLiveStats()]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to mongo db"]
+
+    return generateResponse(rs,200)
 
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():
-    dbRuns = runsInfo().getRuns()
+    dbRuns = getRunsInfo().getRuns()
     rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns)]
     return generateResponse(rs,200) 
 
