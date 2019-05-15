@@ -37,6 +37,7 @@ class runsInfo:
             except Exception as e:
                 print("Error: Could not load run")
                 print(e)
+                log[h['run_name']]['PID'] = -1
         
         df=pd.DataFrame(log)
         df=df.transpose()
