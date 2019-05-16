@@ -20,7 +20,7 @@ from pymongo import MongoClient
 from runInfo import *
 
 class runsInfo:
-    def __init__(self,ip='127.0.0.1',port=27017):
+    def __init__(self,ip: str='127.0.0.1',port: int=27017):
         self.__client = MongoClient(ip, port)
         self.loadtable()
 
@@ -29,9 +29,14 @@ class runsInfo:
         self.collection = self.db.gridRuns
         hce=self.collection.find()
         log={}
-        for h in hce: 
-            log[h['run_name']]=h
-            if log[h['run_name']]['PID'] == 'fake':
+        for h in hce:
+            try:
+                log[h['run_name']]=h
+                if log[h['run_name']]['PID'] == 'fake':
+                    log[h['run_name']]['PID'] = -1
+            except Exception as e:
+                print("Error: Could not load run")
+                print(e)
                 log[h['run_name']]['PID'] = -1
         
         df=pd.DataFrame(log)

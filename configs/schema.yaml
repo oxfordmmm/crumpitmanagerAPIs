@@ -1,3 +1,9 @@
 {
-  'logDir': {'type': 'string'}
+  'logDir': {'type': 'string'},
+  'mongoDB': {'required': False, 'type' : 'dict',
+    'schema': {
+      'ip': {'type': 'string'},
+      'port': {'required': False, 'type': 'integer'}
+    }
+  }
 }
