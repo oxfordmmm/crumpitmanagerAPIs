@@ -127,7 +127,7 @@ def getLiveStats():
         rs = [1, getRunsInfo().getLiveStats()]
     except Exception as e:
         logger.debug(str(e))
-        rs = [-1, "could not connect to mongo db"]
+        rs = [-1, "Error Getting liveStats"]
 
     return generateResponse(rs,200)
 

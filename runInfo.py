@@ -2,10 +2,15 @@
 
 #Functionality to give information about a specific run
 #
-#Author: Jez Swann
+#Author: Jez Swann and Nicholas Sanderson
 #Date: May 2019
 
 import os
+
+import pandas as pd
+
+def splitName(r):
+    return r.split(' ')[0]
 
 class runInfo:
     def __init__(self,run: dict):
@@ -36,23 +41,48 @@ class runInfo:
             batches=[]
             batch_number=0
 
-        try:
-            f5s=os.listdir('{0}/f5s/'.format(self.run['cwd']))
-            f5_numbers=len(f5s)
-        except:
-            f5s=[]
-            f5_numbers=len(f5s)
+        df=pd.read_csv('{0}/trace.txt'.format(self.run['cwd']),sep='\t')
+        df['process']=df.name.map(splitName)
+        df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
+        df['time']=df['time']/60
+        c=df.groupby('process')['status'].count()
+        c=c.reset_index()
 
-        try:
-            percent=(f5_numbers / batch_number)*100
-        except:
-            percent=0
+        t=df.groupby('process')['time'].mean()
+        t=t.reset_index()
+        print(t)
+        tdf=t[['process','time']].set_index('process').T
+        print(tdf)
+        print(self.run)
+        tdf['run']=self.run['run_name']
+        tdf=tdf.set_index('run')
+
+
+        c['batches']=self.batch_number
+        c['percent complete']=(c['status']/c['batches'])*100
+        self.df=c[['process','percent complete']].set_index('process').T
+        self.df['run']=self.run
+        self.df['batches']=self.batch_number
+        self.df=self.df.set_index('run')
+
+        # try:
+        #     f5s=os.listdir('{0}/f5s/'.format(self.run['cwd']))
+        #     f5_numbers=len(f5s)
+        # except:
+        #     f5s=[]
+        #     f5_numbers=len(f5s)
+
+        # try:
+        #     percent=(f5_numbers / batch_number)*100
+        # except:
+        #     percent=0
         
-        output = { 
-            "batches" : batches,
-            "batch_number" : batch_number,
-            "f5s" : f5s,
-            "f5_numbers" : f5_numbers,
-            "percent" : percent
-        }
+        # output = { 
+        #     "batches" : batches,
+        #     "batch_number" : batch_number,
+        #     "f5s" : f5s,
+        #     "f5_numbers" : f5_numbers,
+        #     "percent" : percent
+        # }
+        output = {}
         return output
