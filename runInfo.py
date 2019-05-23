@@ -50,20 +50,16 @@ class runInfo:
 
         t=df.groupby('process')['time'].mean()
         t=t.reset_index()
-        print(t)
         tdf=t[['process','time']].set_index('process').T
-        print(tdf)
-        print(self.run)
         tdf['run']=self.run['run_name']
         tdf=tdf.set_index('run')
 
-
-        c['batches']=self.batch_number
+        c['batches']=batch_number
         c['percent complete']=(c['status']/c['batches'])*100
-        self.df=c[['process','percent complete']].set_index('process').T
-        self.df['run']=self.run
-        self.df['batches']=self.batch_number
-        self.df=self.df.set_index('run')
+        df=c[['process','percent complete']].set_index('process').T
+        df['run']=self.run['run_name']
+        df['batches']=batch_number
+        df=df.set_index('run')
 
         # try:
         #     f5s=os.listdir('{0}/f5s/'.format(self.run['cwd']))
@@ -84,5 +80,4 @@ class runInfo:
         #     "f5_numbers" : f5_numbers,
         #     "percent" : percent
         # }
-        output = {}
-        return output
+        return df

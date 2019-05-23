@@ -45,6 +45,7 @@ class runsInfo:
 
     def __getLiveRunRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getLiveStats()
+        print(rs)
         r['batches']=rs["batch_number"]
         r['f5s']=rs["f5_numbers"]
         r['percent complete']=rs["percent"]
