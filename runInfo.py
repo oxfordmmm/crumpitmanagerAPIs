@@ -58,26 +58,18 @@ class runInfo:
         c['percent complete']=(c['status']/c['batches'])*100
         df=c[['process','percent complete']].set_index('process').T
         df['run']=self.run['run_name']
-        df['batches']=batch_number
         df=df.set_index('run')
+        percentDict = df.to_dict("index")
+        timeDict = tdf.to_dict("index")
 
-        # try:
-        #     f5s=os.listdir('{0}/f5s/'.format(self.run['cwd']))
-        #     f5_numbers=len(f5s)
-        # except:
-        #     f5s=[]
-        #     f5_numbers=len(f5s)
-
-        # try:
-        #     percent=(f5_numbers / batch_number)*100
-        # except:
-        #     percent=0
+        processInfo = {}
+        for process, percent in percentDict[self.run['run_name']].items():
+            processInfo[process] = { 'percent' : percent }
+        for process, time in timeDict[self.run['run_name']].items():
+            processInfo[process]['time'] = time
         
-        # output = { 
-        #     "batches" : batches,
-        #     "batch_number" : batch_number,
-        #     "f5s" : f5s,
-        #     "f5_numbers" : f5_numbers,
-        #     "percent" : percent
-        # }
-        return df
+        output = { 
+            "batch_number" : batch_number,
+            "processes" : processInfo
+        }
+        return output
