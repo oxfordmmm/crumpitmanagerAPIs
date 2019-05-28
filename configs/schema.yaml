@@ -1,5 +1,10 @@
 {
   'logDir': {'type': 'string'},
+  'flask': {'required': False, 'type' : 'dict',
+    'schema': {
+      'port': {'type': 'integer'}
+    }
+  },
   'mongoDB': {'required': False, 'type' : 'dict',
     'schema': {
       'ip': {'type': 'string'},
