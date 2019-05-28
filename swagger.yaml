@@ -1,0 +1,116 @@
+openapi: 3.0.1
+info:
+  title: crumpitManager
+  description: Crumpit Manager APIs
+  version: '0.1'
+servers:
+  - url: 'http://192.168.113.133:5607'
+paths:
+  /runs:
+    get:
+      description: Get all the runs
+      responses:
+        '200':
+          description: A list of all runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/run'
+                  status:
+                    type: integer
+  /runs/liveStats:
+    get:
+      description: Get all the live runs
+      responses:
+        '200':
+          description: A list of live runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/liveRun'
+                  status:
+                    type: integer
+  /backups:
+    get:
+      description: Get the status of backups
+      responses:
+        '200':
+          description: List of Runs and backup status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/backup'
+                  status:
+                    type: integer
+
+components:
+  schemas:
+    run:
+      type: object
+      properties:
+        starttime:
+          type: string
+        Finishingtime:
+          type: string
+        Submittedtime:
+          type: string
+        status:
+          type: string
+        Finishtime:
+          type: string
+        cwd:
+          type: string
+        run_name:
+          type: string
+        _id:
+          type: string
+        PID:
+          type: integer
+          format: int32
+
+    liveRun:
+      type: object
+      properties:
+        batches:
+          type: integer
+        cwd:
+          type: string
+        processes:
+          type: array
+          items:
+            $ref: '#/components/schemas/process'
+        Submittedtime:
+          type: string
+
+    process:
+      type: object
+      properties:
+        time:
+          type: number
+        percent:
+          type: number
+
+    backup:
+      type: object
+      properties:
+        sequencing_summary.txt.gz: 
+          type: integer
+        basecalled_fastq: 
+          type: integer
+        f5s:
+          type: integer
