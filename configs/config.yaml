@@ -1,6 +1,6 @@
 logDir: '/var/log/CrumpitManagerLogs'
 flask: {
-  port: 5608
+  port: 5607
 }
 mongoDB: { 
   ip: '127.0.0.1',
