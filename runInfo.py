@@ -44,8 +44,14 @@ class runInfo:
         df=pd.read_csv('{0}/trace.txt'.format(self.run['cwd']),sep='\t')
         df['process']=df.name.map(splitName)
         df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
-        c=df.groupby('process')['status'].count()
+        c=df[df.status == 'COMPLETED'].groupby('process')['status'].count()
         c=c.reset_index()
+
+        m=df[df.status == 'COMPLETED'].groupby('process')['task_id'].min()
+        m=m.reset_index()
+        mdf=m[['process','task_id']].set_index('process').T
+        mdf['run']=self.run['run_name']
+        mdf=mdf.set_index('run')
 
         t=df.groupby('process')['time'].mean()
         t=t.reset_index()
@@ -59,11 +65,14 @@ class runInfo:
         df['run']=self.run['run_name']
         df=df.set_index('run')
         percentDict = df.to_dict("index")
+        minIdDict = mdf.to_dict("index")
         timeDict = tdf.to_dict("index")
 
         processInfo = {}
+        for process, minTaskId in minIdDict[self.run['run_name']].items():
+            processInfo[process] = { 'minTaskId' : minTaskId }        
         for process, percent in percentDict[self.run['run_name']].items():
-            processInfo[process] = { 'percent' : percent }
+            processInfo[process]['percent'] = percent
         for process, time in timeDict[self.run['run_name']].items():
             processInfo[process]['time'] = int(time)
         
