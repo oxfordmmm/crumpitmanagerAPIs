@@ -44,7 +44,6 @@ class runInfo:
         df=pd.read_csv('{0}/trace.txt'.format(self.run['cwd']),sep='\t')
         df['process']=df.name.map(splitName)
         df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
-        df['time']=df['time']/60
         c=df.groupby('process')['status'].count()
         c=c.reset_index()
 
@@ -66,7 +65,7 @@ class runInfo:
         for process, percent in percentDict[self.run['run_name']].items():
             processInfo[process] = { 'percent' : percent }
         for process, time in timeDict[self.run['run_name']].items():
-            processInfo[process]['time'] = time
+            processInfo[process]['time'] = int(time)
         
         output = { 
             "batch_number" : batch_number,
