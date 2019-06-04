@@ -46,8 +46,7 @@ class runsInfo:
     def __getLiveRunRows(self, r: pd.Series):
         rs=runInfo(r.to_dict()).getLiveStats()
         r['batches']=rs["batch_number"]
-        r['f5s']=rs["f5_numbers"]
-        r['percent complete']=rs["percent"]
+        r['processes']=rs["processes"]
         return r
 
     def __getRunRows(self, r: pd.Series):
@@ -85,7 +84,7 @@ class runsInfo:
         liveRuns = self.getLiveRuns()
         df = liveRuns.apply(self.__getLiveRunRows,axis=1)
         try:
-            df=df[['Submittedtime','batches','f5s','percent complete','cwd']]
+            df=df[['Submittedtime','batches','processes','cwd']]
         except:
             print("Error: Could not find Live Stats")
 

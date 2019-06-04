@@ -127,7 +127,7 @@ def getLiveStats():
         rs = [1, getRunsInfo().getLiveStats()]
     except Exception as e:
         logger.debug(str(e))
-        rs = [-1, "could not connect to mongo db"]
+        rs = [-1, "Error Getting liveStats"]
 
     return generateResponse(rs,200)
 
@@ -156,4 +156,11 @@ def generateResponse(result, statusCode = None):
     return resp
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5607)
+    port = 5607
+    try:
+        port = cfg.get('flask')['port']
+        logger.debug("Using flask port %d", port)
+    except Exception as e: 
+        logger.debug("Using default flask port 5607")
+        
+    app.run(host='0.0.0.0', port=port)
