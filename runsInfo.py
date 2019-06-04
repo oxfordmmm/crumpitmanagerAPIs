@@ -53,6 +53,7 @@ class runsInfo:
         rs=runInfo(r.to_dict()).getStats()
         r['Finishtime']=rs["Finishtime"]
         r['Finishingtime']=rs["Finishingtime"]
+        r['batches']=rs['batches']
         return r
 
     def getRuns(self):

@@ -94,15 +94,16 @@ def getRuns():
 
 @app.route('/runs/graph',methods = ['GET'])
 def getRunsGraph():
+    runsInfo = None
     try:
-        runInfo = getRunsInfo()
+        runsInfo = getRunsInfo()
     except Exception as e:
         logger.debug(str(e))
         rs = [-1, "could not connect to mongo db"]
         return generateResponse(rs, 200)
 
     try:
-        filename = getRunsInfo().getRunsGraph()
+        filename = runsInfo.getRunsGraph()
         if isinstance(filename, str):
             runGraph = open(filename, 'rb')
             image_read = runGraph.read()
