@@ -37,15 +37,30 @@ function checkProgressOnRunStep()
                     echo "$runName - $step - Local and Remote same - files newer than 7 days, not listing for deletion - (2)" | tee -a $logFile
                     echo "${gridLoc}/${runName}/${step}" >> ${logLoc}/futureDelete
                 fi
+
+                if [ "$step" != "sequencing_summary.txt.gz" ]; then
+                    findBatches=$(find $runName/$step -type f -printf "%f\n" | awk '{split($0,a,"[_.]"); print a[2]}' | sort | uniq | wc -l)
+                    if [ "$findBatches" == "1" ]; then
+                        findBatches=$(find $runName/$step -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                    fi
+                    echo "{\"batches\" : $findBatches}" | tee -a $logFile
+                fi
             elif [ "$diffStatus" == "1" ]; then
                 echo "$runName - $step - Local and Remote different - (0)" | tee -a $logFile
+                if [ "$step" != "sequencing_summary.txt.gz" ]; then
+                    findBatches=$(find $runName/$step -type f -printf "%f\n" | awk '{split($0,a,"[_.]"); print a[2]}' | sort | uniq | wc -l)
+                    if [ "$findBatches" == "1" ]; then
+                        findBatches=$(find $runName/$step -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                    fi
+                    echo "{\"batches\" : $findBatches}" | tee -a $logFile
+                fi
                 echo "${output}" | tee -a $logFile
 #                echo "${gridLoc}/${runName}/${step}" >> ${logLoc}/toUpload
             else
                 echo "$runName - $step - Something happened - User Cancelled Script? - (-1)"  | tee -a $logFile
                 echo "${output}" | tee -a $logFile
                 break
-            fi 
+            fi
         fi
     fi
 }

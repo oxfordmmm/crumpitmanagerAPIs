@@ -16,6 +16,12 @@ class runInfo:
     def __init__(self,run: dict):
         self.run=run
 
+        self.batches=[]
+        try:
+            self.batches=os.listdir('{0}/all_batches/'.format(self.run['cwd']))
+        except:
+            self.batches=[]
+
     def getStats(self):
         try:
             finishTime = self.run["Finishtime"]
@@ -29,18 +35,12 @@ class runInfo:
 
         output = { 
             "Finishtime" : str(finishTime),
-            "Finishingtime" : str(finishingTime)
+            "Finishingtime" : str(finishingTime),
+            "batches" : len(self.batches)
         }
         return output
 
     def getLiveStats(self):
-        try:
-            batches=os.listdir('{0}/all_batches/'.format(self.run['cwd']))
-            batch_number=len(batches)
-        except:
-            batches=[]
-            batch_number=0
-
         df=pd.read_csv('{0}/trace.txt'.format(self.run['cwd']),sep='\t')
         df['process']=df.name.map(splitName)
         df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
@@ -59,8 +59,7 @@ class runInfo:
         tdf['run']=self.run['run_name']
         tdf=tdf.set_index('run')
 
-        c['batches']=batch_number
-        c['percent complete']=(c['status']/c['batches'])*100
+        c['percent complete']=(c['status']/len(self.batches))*100
         df=c[['process','percent complete']].set_index('process').T
         df['run']=self.run['run_name']
         df=df.set_index('run')
@@ -77,7 +76,7 @@ class runInfo:
             processInfo[process]['time'] = int(time)
         
         output = { 
-            "batch_number" : batch_number,
+            "batch_number" : len(self.batches),
             "processes" : processInfo
         }
         return output

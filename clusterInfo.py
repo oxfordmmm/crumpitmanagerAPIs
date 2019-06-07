@@ -7,6 +7,7 @@
 
 import os
 import glob
+import json
 
 class clusterInfo:
     def processStep(self, fileStream, currentline):
@@ -14,12 +15,25 @@ class clusterInfo:
 
         stepResult = {}
         stepResult['result'] = int(splitLine[-1].strip('() \n'))
+            # TODO deal with -1 status
         if stepResult['result'] == 1 or stepResult['result'] == 2:
             stepResult['step'] = splitLine[-4].strip()
         else:
             stepResult['step'] = splitLine[-3].strip()
+        if stepResult['step'] == 'sequencing_summary.txt.gz':
+            stepResult['step'] = 'sequencing_summary'
 
         currentline = fileStream.readline()
+        additionalInfo = None
+        if currentline:
+            try:
+                additionalInfo = json.loads(currentline)
+                for key, value in additionalInfo.items():
+                    stepResult[key] = value
+                currentline = fileStream.readline()
+            except:
+                pass
+
         if stepResult['result'] == 0 and currentline:
             lineLen = len(currentline.strip())
             while len(currentline.strip()) != 0 and currentline:
@@ -48,7 +62,10 @@ class clusterInfo:
                     gridDict[runName] = {}
                     while not finishedRun:
                         stepResult, line, finishedRun = self.processStep(gridLog, line)
-                        gridDict[runName][stepResult['step']] = stepResult['result']
+                        gridDict[runName][stepResult['step']] = {}
+                        for key, value in stepResult.items():
+                            if key != 'step':
+                                gridDict[runName][stepResult['step']][key] = value
 
                     if line:
                         line = gridLog.readline()
@@ -79,5 +96,6 @@ class clusterInfo:
             for run in runStatusDict.keys():
                 if run in dbRuns:
                     runStatusDict[run]['starttime'] = dbRuns[run]['starttime']
+                    runStatusDict[run]['batches'] = dbRuns[run]['batches']
 
         return runStatusDict
