@@ -47,7 +47,7 @@ function checkProgressOnRunStep()
 
                     findOriginalBatches="-1"
                     if [ "$step" == "f5s" ]; then
-                        findOriginalBatches=$(find $gridLoc/$runName/$runName*/fast5_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                        findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fast5_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
                     elif [ "$step" == "basecalled_fastq" ]; then
                         findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fastq_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
                     fi
