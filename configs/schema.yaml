@@ -10,5 +10,37 @@
       'ip': {'type': 'string'},
       'port': {'required': False, 'type': 'integer'}
     }
+  },
+  'clusterInfoCluster': {
+    'type': 'dict',
+    'schema': {
+      'gridIONS': {
+        'type': 'list',
+        'schema': { 
+          'type': 'dict', 
+          'schema': {
+            'name': {'type': 'string'},
+            'IP': {'type': 'string'},
+            'mountLocation': {'type': 'string'}
+          }
+        }
+      },
+      'storageLocation': {'type': 'string'},
+      'remoteStorage': {
+        'required': False,
+        'type': 'list',
+        'schema': {
+          'type': 'dict', 
+          'schema': {
+            'name': {'type': 'string'},
+            'IP': {'type': 'string'},
+            'storageLocation': {'type': 'string'},
+            'backupOrder': {'type': 'integer'},
+            'sshUsername': {'required': False, 'type': 'string'},
+            'sshKey': {'required': False, 'type': 'string'}
+          }
+        }
+      }
+    }
   }
 }

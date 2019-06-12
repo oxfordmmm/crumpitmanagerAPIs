@@ -10,6 +10,27 @@ import glob
 import json
 
 class clusterInfo:
+    def getLocalInfo(self, grids: dict):
+        localDict = {}
+        #for grid in grids.items():
+            # if state == OK
+            # df
+            # count runs
+        
+        # df nanostore
+        # count runs
+        
+        return localDict
+
+    def getRemoteInfo(self, locations: dict):
+        remoteDict = {}
+        #for location in locations.items():
+            # ping location
+            # if state == OK
+                # ssh df command
+                # count runs
+        return remoteDict
+
     def processStep(self, fileStream, currentline):
         splitLine = currentline.split('-')
 
