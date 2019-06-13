@@ -138,6 +138,12 @@ def getRunBackups():
     rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns)]
     return generateResponse(rs,200) 
 
+@app.route('/clusterInfo',methods = ['GET'])
+def getClusterInfo():
+    localInfo = clusterInfo().getLocalInfo(cfg.get('clusterInfo'))
+    rs = [1, localInfo]
+    return generateResponse(rs,200) 
+
 #input: result is an array
 #result[0] = 0 for OK -- else for error 
 #result[1] = data or error message

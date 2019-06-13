@@ -11,7 +11,7 @@
       'port': {'required': False, 'type': 'integer'}
     }
   },
-  'clusterInfoCluster': {
+  'clusterInfo': {
     'type': 'dict',
     'schema': {
       'gridIONS': {
