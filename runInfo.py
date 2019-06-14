@@ -41,7 +41,13 @@ class runInfo:
         return output
 
     def getLiveStats(self):
-        df=pd.read_csv('{0}/trace.txt'.format(self.run['cwd']),sep='\t')
+        f=os.listdir(self.run['cwd'])
+        f=[i for i in f if i.startswith('trace.txt')]
+        dfs=[]
+        for i in f:
+            dfs.append(pd.read_csv('{0}/{1}'.format(self.run['cwd'], i),sep='\t'))
+        df=pd.concat(dfs)
+
         df['process']=df.name.map(splitName)
         df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
         c=df[df.status == 'COMPLETED'].groupby('process')['status'].count()
