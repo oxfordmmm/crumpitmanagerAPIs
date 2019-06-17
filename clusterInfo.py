@@ -25,8 +25,8 @@ class clusterInfo:
             line = p2.stdout.readline()
             if line:
                 dfOutput = line.decode('utf-8').strip().split()
-                diskSize = int(dfOutput[2][:-1])
-                diskUse = int(dfOutput[3][:-1])
+                diskSize = int(dfOutput[1][:-1])
+                diskUse = int(dfOutput[2][:-1])
 
         if diskSize and diskUse:
             diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
