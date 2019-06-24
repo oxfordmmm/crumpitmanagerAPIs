@@ -9,7 +9,82 @@ import os
 import glob
 import json
 
+import subprocess, platform
+#import paramiko
+
 class clusterInfo:
+    def getDiskInfo(self, location: str):
+        args = ["df", "-BG", location]
+        p1 = subprocess.Popen(args, stdout=subprocess.PIPE)
+        p1.wait()
+
+        diskSize = None
+        diskUse = None
+        if p1.returncode == 0:
+            p2 = subprocess.Popen(['tail', '-n', '+2'], stdin=p1.stdout, stdout=subprocess.PIPE)
+            line = p2.stdout.readline()
+            if line:
+                dfOutput = line.decode('utf-8').strip().split()
+                diskSize = int(dfOutput[1][:-1])
+                diskUse = int(dfOutput[2][:-1])
+
+        if diskSize and diskUse:
+            diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
+            return diskDict
+        else:
+            return None
+
+    def getLocalInfo(self, clusterInfoDict: dict):
+        localDict = {'grids': dict()}
+        for grid in clusterInfoDict['gridIONS']:
+            try:
+                # adapted from https://stackoverflow.com/a/35625078
+                # Ping
+                ping_str = "-n 1" if  platform.system().lower()=="windows" else "-c 1"
+                args = "ping " + " " + ping_str + " " + grid['IP']
+                need_sh = False if  platform.system().lower()=="windows" else True
+                pingResult = subprocess.run(args, stdout=subprocess.DEVNULL ,shell=need_sh).returncode == 0
+                
+                if pingResult:
+                    # Get disk usage and size
+                    diskInfo = self.getDiskInfo(grid['mountLocation'])
+                    
+                    # Count runs
+
+                    # Put info into dict to be passed on
+                    if diskInfo:
+                        localDict['grids'][grid['name']] = {'status':pingResult, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
+                    else:
+                        localDict['grids'][grid['name']] = {'status':pingResult}
+                else:
+                    localDict['grids'][grid['name']] = {'status':pingResult}
+            except Exception as e:
+                print("ERROR: Could process gridION, skipping")
+                print(e)
+
+        # Get disk usage and size
+        diskInfo = self.getDiskInfo(clusterInfoDict['storageLocation'])
+        localDict['storage'] = diskInfo
+
+        # count runs
+        
+        return localDict
+
+    def getRemoteInfo(self, locations: dict):
+        remoteDict = {}
+        #for location in locations.items():
+            # ping location
+            # if state == OK
+                # ssh df command
+                # count runs
+
+                # if reachable:
+                # client = SSHClient()
+                # client.load_system_host_keys()
+                # client.connect('ssh.example.com')
+                # stdin, stdout, stderr = client.exec_command('ls -l')
+        return remoteDict
+
     def processStep(self, fileStream, currentline):
         splitLine = currentline.split('-')
 

@@ -6,3 +6,21 @@ mongoDB: {
   ip: '127.0.0.1',
   port: 27017
 }
+clusterInfo: {
+  gridIONS: [
+    {
+      name: 'grid1',
+      IP: '127.0.0.1',
+      mountLocation: '/mnt/gridX'
+    }
+  ],
+  storageLocation: '/mnt/nanostore',
+  remoteStorage: [
+    {
+      name: 'Location1',
+      IP: '127.0.0.1',
+      backupOrder: 1,
+      storageLocation: '/mnt/backup/Nanopore'
+    }
+  ]
+}
