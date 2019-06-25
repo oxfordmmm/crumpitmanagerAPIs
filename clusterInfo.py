@@ -10,7 +10,7 @@ import glob
 import json
 
 import subprocess, platform
-#import paramiko
+import paramiko
 
 class clusterInfo:
     def getDiskInfo(self, location: str):
@@ -70,19 +70,97 @@ class clusterInfo:
         
         return localDict
 
+    def getRemoteDiskInfo(self, remoteInfo: dict = {}):
+        host = ''
+        try:
+            host = remoteInfo['IP']
+        except Exception as e:
+            print("Did not provide an IP, cannot connect")
+            return None
+        
+        user = ''
+        try:
+            user = remoteInfo['sshUsername']
+        except Exception as e:
+            print("Did not provide a SSH username, cannot connect")
+            return None
+        
+        port = 22
+        try:
+            port = remoteInfo['port']
+        except Exception as e:
+            print("Did not provide a port, setting default")
+
+        key = ''
+        try:
+            key = remoteInfo['sshKey']
+        except Exception as e:
+            print("Did not provide a SSH key, setting default")
+
+        with paramiko.SSHClient() as client:
+            client.load_system_host_keys()
+            try:
+                if (key != ''):
+                    client.connect(host,port=port,username=user,key_filename=key)
+                else:
+                    client.connect(host,port=port,username=user)
+            except Exception as e:
+                print("Could not connect, quiting")
+                print(e)
+                return None
+
+            try:
+                args = ['df', '-BG', remoteInfo['storageLocation'], '|', 'tail', '-n', '+2']
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+
+                diskSize = None
+                diskUse = None
+                line = stdout.readline()
+                if line:
+                    dfOutput = line.strip().split()
+                    diskSize = int(dfOutput[1][:-1])
+                    diskUse = int(dfOutput[2][:-1])
+                else:
+                    print(stderr.read())
+
+                if diskSize and diskUse:
+                    diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
+                    return diskDict
+                else:
+                    return None
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
+                print(e)
+                return None
+
     def getRemoteInfo(self, locations: dict):
         remoteDict = {}
-        #for location in locations.items():
-            # ping location
-            # if state == OK
-                # ssh df command
-                # count runs
+        for location in locations:
+            try:
+                # adapted from https://stackoverflow.com/a/35625078
+                # Ping
+                ping_str = "-n 1" if  platform.system().lower()=="windows" else "-c 1"
+                args = "ping " + " " + ping_str + " " + location['IP']
+                need_sh = False if  platform.system().lower()=="windows" else True
+                pingResult = subprocess.run(args, stdout=subprocess.DEVNULL ,shell=need_sh).returncode == 0
+                
+                if pingResult:
+                    # Get disk usage and size
+                    diskInfo = self.getRemoteDiskInfo(location)
+                    
+                    # Count runs
 
-                # if reachable:
-                # client = SSHClient()
-                # client.load_system_host_keys()
-                # client.connect('ssh.example.com')
-                # stdin, stdout, stderr = client.exec_command('ls -l')
+                    # Put info into dict to be passed on
+                    if diskInfo:
+                        remoteDict[location['name']] = {'status':pingResult, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
+                    else:
+                        remoteDict[location['name']] = {'status':pingResult}
+                else:
+                    remoteDict[location['name']] = {'status':pingResult}
+            except Exception as e:
+                print("ERROR: Could process storageLocation, skipping")
+                print(e)
+
         return remoteDict
 
     def processStep(self, fileStream, currentline):

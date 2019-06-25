@@ -19,8 +19,10 @@ clusterInfo: {
     {
       name: 'Location1',
       IP: '127.0.0.1',
+      sshUsername: 'jez',
       backupOrder: 1,
-      storageLocation: '/mnt/backup/Nanopore'
+      storageLocation: '/mnt/backup/Nanopore',
+      logDir: '/var/log/CrumpitManagerLogs'
     }
   ]
 }

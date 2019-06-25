@@ -34,9 +34,11 @@
           'schema': {
             'name': {'type': 'string'},
             'IP': {'type': 'string'},
+            'port': {'required': False, 'type': 'integer'},
             'storageLocation': {'type': 'string'},
             'backupOrder': {'type': 'integer'},
-            'sshUsername': {'required': False, 'type': 'string'},
+            'logDir': {'type': 'string'},
+            'sshUsername': {'type': 'string'},
             'sshKey': {'required': False, 'type': 'string'}
           }
         }

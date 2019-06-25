@@ -141,8 +141,10 @@ def getRunBackups():
 @app.route('/clusterInfo',methods = ['GET'])
 def getClusterInfo():
     localInfo = clusterInfo().getLocalInfo(cfg.get('clusterInfo'))
-    rs = [1, localInfo]
-    return generateResponse(rs,200) 
+    remoteInfo = clusterInfo().getRemoteInfo(cfg.get('clusterInfo')['remoteStorage'])
+    combinedInfo = {'localInfo': localInfo, 'remoteInfo': remoteInfo}
+    rs = [1, combinedInfo]
+    return generateResponse(rs,200)
 
 #input: result is an array
 #result[0] = 0 for OK -- else for error 
