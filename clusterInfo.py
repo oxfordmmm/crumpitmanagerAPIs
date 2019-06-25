@@ -59,7 +59,7 @@ class clusterInfo:
                 else:
                     localDict['grids'][grid['name']] = {'status':pingResult}
             except Exception as e:
-                print("ERROR: Could process gridION, skipping")
+                print("ERROR: Could not process gridION, skipping")
                 print(e)
 
         # Get disk usage and size
@@ -70,7 +70,7 @@ class clusterInfo:
         
         return localDict
 
-    def getRemoteDiskInfo(self, remoteInfo: dict = {}):
+    def getRemoteConnection(self, remoteInfo: dict = {}):
         host = ''
         try:
             host = remoteInfo['IP']
@@ -97,41 +97,52 @@ class clusterInfo:
         except Exception as e:
             print("Did not provide a SSH key, setting default")
 
-        with paramiko.SSHClient() as client:
-            client.load_system_host_keys()
-            try:
-                if (key != ''):
-                    client.connect(host,port=port,username=user,key_filename=key)
-                else:
-                    client.connect(host,port=port,username=user)
-            except Exception as e:
-                print("Could not connect, quiting")
-                print(e)
-                return None
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        try:
+            if (key != ''):
+                client.connect(host,port=port,username=user,key_filename=key, banner_timeout=20)
+            else:
+                client.connect(host,port=port,username=user)
+            return client
+        except Exception as e:
+            print("Could not connect, quiting")
+            print(e)
+            client.close()
+            return None
 
+    def getRemoteDiskInfo(self, remoteInfo: dict = {}):
+        try:
+            client = self.getRemoteConnection(remoteInfo)
             try:
                 args = ['df', '-BG', remoteInfo['storageLocation'], '|', 'tail', '-n', '+2']
                 stdin, stdout, stderr = client.exec_command(' '.join(args))
-
-                diskSize = None
-                diskUse = None
-                line = stdout.readline()
-                if line:
-                    dfOutput = line.strip().split()
-                    diskSize = int(dfOutput[1][:-1])
-                    diskUse = int(dfOutput[2][:-1])
-                else:
-                    print(stderr.read())
-
-                if diskSize and diskUse:
-                    diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
-                    return diskDict
-                else:
-                    return None
             except Exception as e:
                 print("Could not get data from SSH session, quiting")
                 print(e)
                 return None
+
+            diskSize = None
+            diskUse = None
+            line = stdout.readline()
+            if line:
+                if len(line) < 1:
+                    print('ERROR: No valid output on remote storage')
+                    print(stderr.read())
+                else:
+                    dfOutput = line.strip().split()
+                    diskSize = int(dfOutput[1][:-1])
+                    diskUse = int(dfOutput[2][:-1])
+
+            if diskSize and diskUse:
+                diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
+                return diskDict
+            else:
+                return None
+
+        finally:
+            client.close()
+
 
     def getRemoteInfo(self, locations: dict):
         remoteDict = {}
@@ -158,7 +169,7 @@ class clusterInfo:
                 else:
                     remoteDict[location['name']] = {'status':pingResult}
             except Exception as e:
-                print("ERROR: Could process storageLocation, skipping")
+                print("ERROR: Could not process storageLocation, skipping")
                 print(e)
 
         return remoteDict
