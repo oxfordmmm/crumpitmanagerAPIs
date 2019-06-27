@@ -39,7 +39,8 @@
             'backupOrder': {'type': 'integer'},
             'logDir': {'type': 'string'},
             'sshUsername': {'type': 'string'},
-            'sshKey': {'required': False, 'type': 'string'}
+            'sshKey': {'required': False, 'type': 'string'},
+            'tunnelIP': {'required': False, 'type': 'string'}
           }
         }
       }

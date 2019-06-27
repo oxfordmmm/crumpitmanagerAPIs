@@ -97,13 +97,20 @@ class clusterInfo:
         except Exception as e:
             print("Did not provide a SSH key, setting default")
 
+        timeout = 10
+        try:
+            if remoteInfo['timeout'] == 'short':
+                timeout = 2
+        except Exception as e:
+            print("Did not provide a timeout, setting default")
+
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         try:
             if (key != ''):
-                client.connect(host,port=port,username=user,key_filename=key, banner_timeout=20)
+                client.connect(host,port=port,username=user,key_filename=key, timeout=timeout)
             else:
-                client.connect(host,port=port,username=user)
+                client.connect(host,port=port,username=user,timeout=timeout)
             return client
         except Exception as e:
             print("Could not connect, quiting")
@@ -114,8 +121,16 @@ class clusterInfo:
     def getRemoteDiskInfo(self, remoteInfo: dict = {}):
         try:
             client = self.getRemoteConnection(remoteInfo)
+            args = []
             try:
+                tunnelIP = remoteInfo['tunnelIP']
+                print("Using SSH tunnel to {}".format(tunnelIP))
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'df', '-BG', remoteInfo['storageLocation'], '|', 'tail', '-n', '+2', '"']
+            except Exception as e:
+                print("No SSH tunnel needed")
                 args = ['df', '-BG', remoteInfo['storageLocation'], '|', 'tail', '-n', '+2']
+
+            try:
                 stdin, stdout, stderr = client.exec_command(' '.join(args))
             except Exception as e:
                 print("Could not get data from SSH session, quiting")
@@ -133,6 +148,8 @@ class clusterInfo:
                     dfOutput = line.strip().split()
                     diskSize = int(dfOutput[1][:-1])
                     diskUse = int(dfOutput[2][:-1])
+            else:
+                print(stderr.read())
 
             if diskSize and diskUse:
                 diskDict = {'diskSize': diskSize, 'diskUse': diskUse}
@@ -155,17 +172,17 @@ class clusterInfo:
                 need_sh = False if  platform.system().lower()=="windows" else True
                 pingResult = subprocess.run(args, stdout=subprocess.DEVNULL ,shell=need_sh).returncode == 0
                 
-                if pingResult:
-                    # Get disk usage and size
-                    diskInfo = self.getRemoteDiskInfo(location)
-                    
-                    # Count runs
+                if not pingResult:
+                    location['timeout'] = 'short'
 
-                    # Put info into dict to be passed on
-                    if diskInfo:
-                        remoteDict[location['name']] = {'status':pingResult, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
-                    else:
-                        remoteDict[location['name']] = {'status':pingResult}
+                # Get disk usage and size
+                diskInfo = self.getRemoteDiskInfo(location)
+                
+                # Count runs
+
+                # Put info into dict to be passed on
+                if diskInfo:
+                    remoteDict[location['name']] = {'status':True, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
                 else:
                     remoteDict[location['name']] = {'status':pingResult}
             except Exception as e:
