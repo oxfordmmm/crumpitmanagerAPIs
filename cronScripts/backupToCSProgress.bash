@@ -48,6 +48,9 @@ function checkProgressOnRunStep()
                     findOriginalBatches="-1"
                     if [ "$step" == "f5s" ]; then
                         findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fast5_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                        if [ $(expr ${findOriginalBatches}) -lt 1 ]; then
+                            findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fast5 -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                        fi
                     elif [ "$step" == "basecalled_fastq" ]; then
                         findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fastq_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
                     fi
@@ -65,6 +68,9 @@ function checkProgressOnRunStep()
                     findOriginalBatches="-1"
                     if [ "$step" == "f5s" ]; then
                         findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fast5_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                        if [ $(expr ${findOriginalBatches}) -lt 1 ]; then
+                            findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fast5 -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
+                        fi
                     elif [ "$step" == "basecalled_fastq" ]; then
                         findOriginalBatches=$(find $gridLoc/$runName/$runName/*/fastq_pass -type f -printf "%f\n" \( -iname \*.fast5* -o -iname \*.fastq* \) | wc -l)
                     fi
