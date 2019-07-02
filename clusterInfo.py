@@ -192,7 +192,7 @@ class clusterInfo:
         return remoteDict
 
     def processStep(self, fileStream, currentline):
-        splitLine = currentline.split('-')
+        splitLine = currentline.strip().split('-')
 
         stepResult = {}
         stepResult['result'] = int(splitLine[-1].strip('() \n'))
@@ -208,7 +208,7 @@ class clusterInfo:
         additionalInfo = None
         if currentline:
             try:
-                additionalInfo = json.loads(currentline)
+                additionalInfo = json.loads(currentline.strip())
                 for key, value in additionalInfo.items():
                     stepResult[key] = value
                 currentline = fileStream.readline()
@@ -231,35 +231,90 @@ class clusterInfo:
         return stepResult, currentline, finishRun
                                 
 
-    def processGridLog(self, gridLogFile: str):
-        gridDict = {}
-        with open(gridLogFile, 'r') as gridLog:
-            line = gridLog.readline()
+    def processBackupLog(self, line, backupLog):
+        backupDict = {}
+        try:
+            while line:
+                runName = line.strip()
+                line = backupLog.readline()
+                finishedRun = False
+                backupDict[runName] = {}
+                while not finishedRun:
+                    stepResult, line, finishedRun = self.processStep(backupLog, line)
+                    backupDict[runName][stepResult['step']] = {}
+                    for key, value in stepResult.items():
+                        if key != 'step':
+                            backupDict[runName][stepResult['step']][key] = value
+
+                if line:
+                    line = backupLog.readline()
+
+                if line:
+                    line = backupLog.readline()
+        except Exception as e:
+            print("ERROR: Could not read log file correctly, quiting")
+            print(e)
+
+        return backupDict
+
+    def processLocalBackupLog(self, backupLogFile: str):
+        with open(backupLogFile, 'r') as backupLog:
+            line = backupLog.readline()
+            backupDict = self.processBackupLog(line, backupLog)
+            return backupDict
+
+    def processRemoteBackup(self, remoteInfo):
+        try:
+            logDir = remoteInfo['logDir']
+        except Exception as e:
+            print("No logDir for location {}".format(remoteInfo['name']))
+            return None
+
+        try:
+            client = self.getRemoteConnection(remoteInfo)
+            args = []
+            tunnelIP = None
             try:
-                while line:
-                    runName = line.strip()
-                    line = gridLog.readline()
-                    finishedRun = False
-                    gridDict[runName] = {}
-                    while not finishedRun:
-                        stepResult, line, finishedRun = self.processStep(gridLog, line)
-                        gridDict[runName][stepResult['step']] = {}
-                        for key, value in stepResult.items():
-                            if key != 'step':
-                                gridDict[runName][stepResult['step']][key] = value
-
-                    if line:
-                        line = gridLog.readline()
-
-                    if line:
-                        line = gridLog.readline()
+                tunnelIP = remoteInfo['tunnelIP']
+                print("Using SSH tunnel to {}".format(tunnelIP))
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'find', logDir, '-maxdepth 1 -regextype posix-extended -regex \'.*/[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}\' | sort -r | head -n 1', '"']
             except Exception as e:
-                print("ERROR: Could not read log file correctly, quiting")
+                print("No SSH tunnel needed")
+                args = ['find', logDir, '-maxdepth 1 -regextype posix-extended -regex \'.*/[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}\' | sort -r | head -n 1']
+            try:
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
                 print(e)
+                return None
 
-        return gridDict
+            line = stdout.readline()
+            if line and tunnelIP:
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'cat', line.strip() + '/run.log', '"']
+            elif line:
+                args = ['cat', line.strip() + '/run.log']
+            else:
+                print('No suitable remote log - skipping')
+                return None
 
-    def getBackupInfo(self, logDir: str="", dbRuns: dict={}):
+            try:
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
+                print(e)
+                return None
+            
+            line = stdout.readline()                
+            return self.processBackupLog(line, stdout)
+        except Exception as e:
+            print("ERROR: Could not read remote log file correctly, quiting")
+            print(e)
+            return None
+
+        finally:
+            client.close()
+
+    def getBackupInfo(self, logDir: str="", dbRuns: dict={}, locations: dict={}):
         runStatusDict = {}
         if os.path.exists(logDir):
             # Find most recent log
@@ -268,10 +323,25 @@ class clusterInfo:
             # Open each grid log file
             gridPath = os.path.join(recentLogDir,"run-grid*.log")
             for gridLogFile in glob.glob(gridPath):
-                gridDict = self.processGridLog(gridLogFile)
+                gridDict = self.processLocalBackupLog(gridLogFile)
                 runStatusDict.update(gridDict)
         else:
-            print("Error: Could not find Live Stats")
+            print("Error: Could not find local backup log location")
+
+        if len(locations) > 0:
+            for location in locations:
+                try:
+                    # Get backup
+                    remoteBackup = self.processRemoteBackup(location)
+                    
+                    # Put info into dict to be passed on
+                    for run in remoteBackup.keys():
+                        if run in runStatusDict:
+                            for step in runStatusDict[run]:
+                                step['remoteResult'] = remoteBackup[run]
+                except Exception as e:
+                    print("ERROR: Could not process storageLocation, skipping")
+                    print(e)
 
         if len(dbRuns) > 0:
             for run in runStatusDict.keys():

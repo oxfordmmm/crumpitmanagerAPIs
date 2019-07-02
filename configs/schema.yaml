@@ -37,7 +37,7 @@
             'port': {'required': False, 'type': 'integer'},
             'storageLocation': {'type': 'string'},
             'backupOrder': {'type': 'integer'},
-            'logDir': {'type': 'string'},
+            'logDir': {'required': False,'type': 'string'},
             'sshUsername': {'type': 'string'},
             'sshKey': {'required': False, 'type': 'string'},
             'tunnelIP': {'required': False, 'type': 'string'}
