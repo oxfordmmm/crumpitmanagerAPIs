@@ -338,7 +338,7 @@ class clusterInfo:
                     for run in remoteBackup.keys():
                         if run in runStatusDict:
                             for step, values in runStatusDict[run].items():
-                                values['remoteResult'] = remoteBackup[run][step]
+                                values['remoteResult'] = remoteBackup[run][step]['result']
                 except Exception as e:
                     print("ERROR: Could not process storageLocation, skipping")
                     print(e)
