@@ -335,10 +335,11 @@ class clusterInfo:
                     remoteBackup = self.processRemoteBackup(location)
                     
                     # Put info into dict to be passed on
-                    for run in remoteBackup.keys():
-                        if run in runStatusDict:
-                            for step, values in runStatusDict[run].items():
-                                values['remoteResult'] = remoteBackup[run][step]['result']
+                    if remoteBackup:
+                        for run in remoteBackup.keys():
+                            if run in runStatusDict:
+                                for step, values in runStatusDict[run].items():
+                                    values['remoteResult'] = remoteBackup[run][step]['result']
                 except Exception as e:
                     print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                     print(e)
