@@ -186,7 +186,7 @@ class clusterInfo:
                 else:
                     remoteDict[location['name']] = {'status':pingResult}
             except Exception as e:
-                print("ERROR: Could not process storageLocation, skipping")
+                print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                 print(e)
 
         return remoteDict
@@ -267,7 +267,7 @@ class clusterInfo:
         try:
             logDir = remoteInfo['logDir']
         except Exception as e:
-            print("No logDir for location {}".format(remoteInfo['name']))
+            print("No logDir for location {0}".format(remoteInfo['name']))
             return None
 
         try:
@@ -340,7 +340,7 @@ class clusterInfo:
                             for step, values in runStatusDict[run].items():
                                 values['remoteResult'] = remoteBackup[run][step]['result']
                 except Exception as e:
-                    print("ERROR: Could not process storageLocation, skipping")
+                    print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                     print(e)
 
         if len(dbRuns) > 0:

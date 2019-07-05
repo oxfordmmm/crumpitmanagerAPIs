@@ -43,6 +43,7 @@ class runsInfo:
                 print("Error: Could not load run")
                 print(e)
                 log[h['run_name']]['PID'] = -1
+                log[h['run_name']]['runLocation'] = ''
         
         df=pd.DataFrame(log)
         df=df.transpose()
