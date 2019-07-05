@@ -347,6 +347,7 @@ class clusterInfo:
             for run in runStatusDict.keys():
                 if run in dbRuns:
                     runStatusDict[run]['starttime'] = dbRuns[run]['starttime']
+                    runStatusDict[run]['runLocation'] = dbRuns[run]['runLocation']
                     runStatusDict[run]['batches'] = dbRuns[run]['batches']
 
         return runStatusDict
