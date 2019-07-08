@@ -135,14 +135,16 @@ def getLiveStats():
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():
     dbRuns = getRunsInfo().getRuns()
-    rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns)]
+    rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns, cfg.get('clusterInfo')['remoteStorage'])]
     return generateResponse(rs,200) 
 
 @app.route('/clusterInfo',methods = ['GET'])
 def getClusterInfo():
     localInfo = clusterInfo().getLocalInfo(cfg.get('clusterInfo'))
-    rs = [1, localInfo]
-    return generateResponse(rs,200) 
+    remoteInfo = clusterInfo().getRemoteInfo(cfg.get('clusterInfo')['remoteStorage'])
+    combinedInfo = {'localInfo': localInfo, 'remoteInfo': remoteInfo}
+    rs = [1, combinedInfo]
+    return generateResponse(rs,200)
 
 #input: result is an array
 #result[0] = 0 for OK -- else for error 

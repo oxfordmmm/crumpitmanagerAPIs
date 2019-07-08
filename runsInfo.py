@@ -32,12 +32,18 @@ class runsInfo:
         for h in hce:
             try:
                 log[h['run_name']]=h
+
+                # Format string fake PID into int
                 if log[h['run_name']]['PID'] == 'fake':
                     log[h['run_name']]['PID'] = -1
+
+                # Try to determine human readable run location (e.g. grid1)
+                log[h['run_name']]['runLocation'] = log[h['run_name']]['cwd'].split('/')[-2]
             except Exception as e:
                 print("Error: Could not load run")
                 print(e)
                 log[h['run_name']]['PID'] = -1
+                log[h['run_name']]['runLocation'] = ''
         
         df=pd.DataFrame(log)
         df=df.transpose()
@@ -85,7 +91,7 @@ class runsInfo:
         liveRuns = self.getLiveRuns()
         df = liveRuns.apply(self.__getLiveRunRows,axis=1)
         try:
-            df=df[['Submittedtime','batches','processes','cwd']]
+            df=df[['Submittedtime','batches','processes','cwd','runLocation']]
         except:
             print("Error: Could not find Live Stats")
 

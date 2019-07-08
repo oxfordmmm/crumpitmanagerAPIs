@@ -28,17 +28,18 @@ function checkProgressOnRunStep()
             output="${outputx%x*}"
 
             if [ "$diffStatus" == "0" ]; then
-                echo "$runName - $step - Local and Remote same" | tee -a $logFile
                 if [ "$step" == "f5s" ]; then
                     # Check older than 60 days
                     findOlder=$(find $runName/$step -type f -mtime +60 -printf "%f\t%s\n"| wc -l)
                     if [ $findOlder -gt 0 ]; then
-                        echo "$runName - $step - f5s older than 60 days, list for deletion - (1)" | tee -a $logFile
+                        echo "$runName - $step - Local and Remote same - f5s older than 60 days, list for deletion - (1)" | tee -a $logFile
                         echo "${runName}" >> ${f5sToDel}
                     else
-                        echo "$runName - $step - f5s newer than 60 days, not listing for deletion - (2)" | tee -a $logFile
+                        echo "$runName - $step - Local and Remote same - f5s newer than 60 days, not listing for deletion - (2)" | tee -a $logFile
                         echo "${runName}" >> ${f5sToDel}.future
                     fi
+                else
+                    echo "$runName - $step - Local and Remote same - files other than f5s do not get deleted - (2)" | tee -a $logFile
                 fi
             elif [ "$diffStatus" == "1" ]; then
                 echo "$runName - $step - Local and Remote different - (0)" | tee -a $logFile
