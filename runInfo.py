@@ -59,7 +59,7 @@ class runInfo:
         mdf['run']=self.run['run_name']
         mdf=mdf.set_index('run')
 
-        t=df.groupby('process')['time'].mean()
+        t=df[df.status == 'COMPLETED'].groupby('process')['time'].mean()
         t=t.reset_index()
         tdf=t[['process','time']].set_index('process').T
         tdf['run']=self.run['run_name']
