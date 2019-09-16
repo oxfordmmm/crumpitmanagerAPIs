@@ -155,6 +155,26 @@ def getMetadataRuns():
 
     return generateResponse(rs,200) 
 
+@app.route('/metadata/run',methods = ['POST'])
+def addRun():
+    if 'json' in request.headers['Content-Type']:
+        try:
+            data = request.json
+            try:
+                print("Params:" + data["sample_name"] + "," + str(data["porechop"]) + "," + str(data["mapping"]))
+            except:
+                return generateResponse([0 ,"Invalid parameter"])
+
+            rs = [1, getMetadata().addRun(data)]
+        except Exception as e:
+            logger.debug(str(e))
+            rs = [-1, "could not connect to SQL db"]
+
+    else:
+        return generateResponse([0,"Unsupported Media Type"])
+
+    return generateResponse(rs,200) 
+
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():
     dbRuns = getRunsInfo().getRuns()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import mysql.connector
 import logging
+import uuid
 
 class metaDataConnection:
     def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta'):
@@ -41,6 +42,152 @@ class metaDataConnection:
         except Exception as e:
             print(e)
 
+    def getTableColumns(self, table):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            query = ("SELECT DISTINCT COLUMN_NAME, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s")
+            self.cursor.execute(query, (self.database, table))
+
+            columns = {}
+            for row in self.cursor:
+                columns[row['COLUMN_NAME']] = row['IS_NULLABLE']
+            
+            return columns
+        
+        except mysql.connector.Error as err:
+            logging.exception("Could not access DB: {}".format(err))
+            return []
+
+    def __createInsertQuery(self, values:dict, fkID:str=None, fkColumn:str=None):
+        columnsText = "(ID"
+        valuesText = "VALUES (%(ID)s"
+        valuesData = { 'ID':str(uuid.uuid4()) }
+
+        if fkID:
+            columnsText += ", {}".format(fkColumn)
+            valuesText += ", %(fkID)s"
+            valuesData['fkID'] = fkID
+        
+        for (column, value) in values.items():
+            columnsText += ", " + column
+            valuesText += ", %(" + column + ")s"
+
+            if isinstance(value, list) and len(value) == 0:
+                valuesData[column] = "NULL"
+            elif isinstance(value, list):
+                valuesData[column] = value[0]
+            elif isinstance(value, str) and (value.lower() == "false" or value.lower() == 'n'):
+                valuesData[column] = 0
+            elif isinstance(value, str) and (value.lower() == "true" or value.lower() == 'y'):
+                valuesData[column] = 1
+            else:
+                valuesData[column] = value
+        
+        columnsText += ") "
+        valuesText += ")"
+        return (columnsText + valuesText, valuesData)
+
+    def __getMapInfo(self, post:dict):
+        mapping = None
+        splitMap = None
+        if 'map' not in post: 
+            logging.debug('mapping is switched off for run {}'.format(post['sample_name']))
+            mapping = False
+        else:
+            if isinstance(post['map'], str):
+                if (str(post['map']).lower() == 'off'):
+                    logging.debug('mapping is switched off for run {}'.format(post['sample_name']))
+                    mapping = False
+                elif str(post['map']).lower() == 'on':
+                    logging.debug('mapping is switched on for run {} with no specific TaxIDs'.format(post['sample_name']))
+                    mapping = True
+                else:
+                    mapping = True
+                    splitMap = str(post['map'][0]).split(' ')
+            else:
+                if (str(post['map'][0]).lower() == 'off'):
+                    logging.debug('mapping is switched off for run {}'.format(post['sample_name']))
+                    mapping = False
+                elif str(post['map'][0]).lower() == 'on':
+                    logging.debug('mapping is switched on for run {} with no specific TaxIDs'.format(post['sample_name']))
+                    mapping = True
+                else:
+                    mapping = True
+                    splitMap = str(post['map'][0]).split(' ')
+        return (mapping, splitMap)
+
+    def __insertIntoRun(self, post: dict):
+        columns = self.getTableColumns('Run')
+        run = {}
+
+        for (column, nullable) in columns.items():
+            if column in post:
+                if column == 'map':
+                    (mapping, splitMap) = self.__getMapInfo(post)
+                    if mapping != None:
+                        run[column] = mapping
+                else:
+                    run[column] = post[column]
+            elif not nullable:
+                raise Exception('Field {} not found and is required.'.format(column))
+            else:
+                logging.debug('Field {} not found but is not required'.format(column))
+
+        (queryText, valuesData) = self.__createInsertQuery(values=run)
+        query = ("INSERT INTO Run " + queryText)
+
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        self.cursor.execute(query, valuesData)
+        if self.cursor.rowcount < 1:
+            raise mysql.connector.errors.Error("No rows inserted")
+        else:
+            return valuesData['ID']
+
+    def __insertIntoMappedSpecies(self, post:dict, runID:str):
+        (mapping, splitMap) = self.__getMapInfo(post)
+        
+        if splitMap:
+            mapList = []
+            for species in splitMap:
+                mapList.append({'taxID':int(species)})
+            
+            for entry in mapList:
+                (queryText, valuesData) = self.__createInsertQuery(values=entry, fkID=runID, fkColumn='RunID')
+                query = ("INSERT INTO `Mapped Species` " + queryText)
+
+                if not self.activeConnection:
+                    self.resetSqlConnection()
+
+                self.cursor.execute(query, valuesData)
+                if self.cursor.rowcount < 1:
+                    raise mysql.connector.errors.Error("No rows inserted")
+
+    def __insertIntoFKTable(self, table:str, idVal:str, idColumn:str, post:dict, fkID:str, fkColumn:str):
+        columns = self.getTableColumns(table)
+
+        valuesDict = { idColumn:idVal }
+        for (column, nullable) in columns.items():
+            if column in post:
+                valuesDict[column] = post[column]
+            elif not nullable:
+                raise Exception('Field {} not found and is required.'.format(column))
+        
+        (queryText, valuesData) = self.__createInsertQuery(values=valuesDict, fkID=fkID, fkColumn=fkColumn)
+        query = ("INSERT INTO `{}` ".format(table) + queryText)
+
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        self.cursor.execute(query, valuesData)
+        if self.cursor.rowcount < 1:
+            raise mysql.connector.errors.Error("No rows inserted")
+        else:
+            return valuesData['ID']
+
     def getRuns(self):
         if not self.activeConnection:
             self.resetSqlConnection()
@@ -57,3 +204,16 @@ class metaDataConnection:
         except mysql.connector.Error as err:
             logging.exception("Could not access runs DB: {}".format(err))
             return -1
+
+    def addRun(self, post: dict):
+        logging.info("Inserting Run {}".format(post['sample_name']))
+        try:
+            runID = self.__insertIntoRun(post=post)
+            self.__insertIntoMappedSpecies(post=post, runID=runID)
+            self.conn.commit()
+        except Exception as e:
+            logging.exception("Exception {}".format(e))
+            logging.exception("Sample {}".format(post['sample_name']))
+            logging.exception(post)
+            return str(e)
+        return "Inserted Run {}".format(post["sample_name"])
