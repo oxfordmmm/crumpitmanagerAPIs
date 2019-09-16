@@ -122,6 +122,7 @@ class clusterInfo:
         try:
             client = self.getRemoteConnection(remoteInfo)
             args = []
+            timeout = 2
             try:
                 tunnelIP = remoteInfo['tunnelIP']
                 print("Using SSH tunnel to {}".format(tunnelIP))
@@ -131,7 +132,7 @@ class clusterInfo:
                 args = ['df', '-BG', remoteInfo['storageLocation'], '|', 'tail', '-n', '+2']
 
             try:
-                stdin, stdout, stderr = client.exec_command(' '.join(args))
+                stdin, stdout, stderr = client.exec_command(' '.join(args), timeout=timeout)
             except Exception as e:
                 print("Could not get data from SSH session, quiting")
                 print(e)
