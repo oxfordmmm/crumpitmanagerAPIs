@@ -23,9 +23,10 @@ import datetime
 from bson.objectid import ObjectId
 from werkzeug import Response
 
-import config
-from runsInfo import *
-from clusterInfo import *
+import app.config
+from app.liveRuns.runsInfo import *
+from app.clusterInfo import *
+from app.metadata.metaDataConnection import *
 
 class MongoJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -55,7 +56,7 @@ def reload_cfg():
     global cfg
     configFile = pathlib.Path("configs/config.yaml")
 
-    cfg = config.Config()
+    cfg = app.config.Config()
     cfg.load(str(configFile))
 
 def getRunsInfo():
@@ -70,6 +71,18 @@ def getRunsInfo():
     
     return runsInfo(mongoDBcfg['ip'], mongoDBcfg['port'])
 
+def getMetadata():
+    try:
+        sqlDBcfg = cfg.get('sqlDB')
+    except Exception as e:
+        return metaDataConnection()
+    try:
+        sqlDBcfg['port']
+    except Exception as e:    
+        return metaDataConnection(sqlDBcfg['ip'])
+    
+    return metaDataConnection(sqlDBcfg['ip'], sqlDBcfg['port'])
+
 setup_logging()
 logger = logging.getLogger('api')
 logger.debug("Logging initialized")
@@ -82,7 +95,7 @@ def api_root():
     rs = [1,'Welcome to crumpit Manager APIs']	
     return generateResponse(rs,200) 
 
-@app.route('/runs',methods = ['GET'])
+@app.route('/liveRuns',methods = ['GET'])
 def getRuns():
     try:
         rs = [1, getRunsInfo().getRuns()]
@@ -92,7 +105,7 @@ def getRuns():
 
     return generateResponse(rs,200) 
 
-@app.route('/runs/graph',methods = ['GET'])
+@app.route('/liveRuns/graph',methods = ['GET'])
 def getRunsGraph():
     runsInfo = None
     try:
@@ -122,7 +135,7 @@ def getRunsGraph():
         rs = [0, "Could not create Image"]
         return generateResponse(rs, 500)
 
-@app.route('/runs/liveStats',methods = ['GET'])
+@app.route('/liveRuns/liveStats',methods = ['GET'])
 def getLiveStats():
     try:
         rs = [1, getRunsInfo().getLiveStats()]
@@ -131,6 +144,16 @@ def getLiveStats():
         rs = [-1, "Error Getting liveStats"]
 
     return generateResponse(rs,200)
+
+@app.route('/metadata/runs',methods = ['GET'])
+def getMetadataRuns():
+    try:
+        rs = [1, getMetadata().getRuns()]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
+
+    return generateResponse(rs,200) 
 
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():

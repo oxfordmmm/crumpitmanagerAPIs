@@ -11,6 +11,12 @@
       'port': {'required': False, 'type': 'integer'}
     }
   },
+  'sqlDB': {'required': False, 'type' : 'dict',
+    'schema': {
+      'ip': {'type': 'string'},
+      'port': {'required': False, 'type': 'integer'}
+    }
+  },
   'clusterInfo': {
     'type': 'dict',
     'schema': {

@@ -12,7 +12,7 @@ import shlex
 import datetime
 
 import yaml
-import validateYAML
+import app.validateYAML
 
 class Config:
     """
@@ -23,7 +23,7 @@ class Config:
 
     def load(self, config_file: str):
         try:
-            validator = validateYAML.validateYAML()
+            validator = app.validateYAML.validateYAML()
             ok, errs = validator.validate_yaml('configs/schema.yaml', config_file)
             if ok:
                 print(config_file, "validated")

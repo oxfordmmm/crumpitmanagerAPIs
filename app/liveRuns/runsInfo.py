@@ -17,7 +17,7 @@ import numpy as np
 
 from pymongo import MongoClient
 
-from runInfo import *
+from app.liveRuns.runInfo import *
 
 class runsInfo:
     def __init__(self,ip: str='127.0.0.1',port: int=27017):
