@@ -161,7 +161,7 @@ def addRun():
         try:
             data = request.json
             try:
-                print("Params:" + data["sample_name"] + "," + str(data["porechop"]) + "," + str(data["mapping"]))
+                print("Params:" + data["sample_name"] + "," + str(data["porechop"]) + "," + str(data["map"]))
             except:
                 return generateResponse([0 ,"Invalid parameter"])
 
