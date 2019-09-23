@@ -148,7 +148,7 @@ def getLiveStats():
 @app.route('/metadata/runs',methods = ['GET'])
 def getMetadataRuns():
     try:
-        rs = [1, getMetadata().getRuns()]
+        rs = [1, getMetadata().getPreRunInfo()]
     except Exception as e:
         logger.debug(str(e))
         rs = [-1, "could not connect to SQL db"]

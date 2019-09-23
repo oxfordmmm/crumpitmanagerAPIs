@@ -205,6 +205,43 @@ class metaDataConnection:
             logging.exception("Could not access runs DB: {}".format(err))
             return -1
 
+    def getPreRunInfo(self):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            query = ("SELECT sample_name, porechop, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+            self.cursor.execute(query)
+
+            info = {}
+            for row in self.cursor:
+                if row['sample_name'] in info:
+                    info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
+                else:
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'porechop':row['porechop']}
+                    if row['TaxID'] == None:
+                        if row['mapping'] == '0':
+                            info[row['sample_name']]['mapping'] = 'off'
+                        else:
+                            info[row['sample_name']]['mapping'] = 'on'
+                    else:
+                        info[row['sample_name']]['mapping'] = row['TaxID']
+            
+            for run in info.values():
+                if (not run['mapping'] == 'off') and (not run['mapping'] == 'on'):
+                    mappingSort = run['mapping'].split(' ')
+                    mappingSortInt = []
+                    for taxID in mappingSort:
+                        mappingSortInt.append(int(taxID))
+                    mappingSortInt.sort()
+                    run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
+            
+            return info
+
+        except mysql.connector.Error as err:
+            logging.exception("Could not access runs DB: {}".format(err))
+            return -1
+
     def addRun(self, post: dict):
         logging.info("Inserting Run {}".format(post['sample_name']))
         try:
