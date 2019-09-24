@@ -105,7 +105,7 @@ class metaDataConnection:
                     mapping = True
                 else:
                     mapping = True
-                    splitMap = str(post['map'][0]).split(' ')
+                    splitMap = str(post['map']).split(' ')
             else:
                 if (str(post['map'][0]).lower() == 'off'):
                     logging.debug('mapping is switched off for run {}'.format(post['sample_name']))
