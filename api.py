@@ -155,6 +155,16 @@ def getMetadataRuns():
 
     return generateResponse(rs,200) 
 
+@app.route('/metadata/run',methods = ['GET'])
+def getMetadataRun():
+    try:
+        rs = [1, getMetadata().getPreRunFields()]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
+
+    return generateResponse(rs,200) 
+
 @app.route('/metadata/run',methods = ['POST'])
 def addRun():
     if 'json' in request.headers['Content-Type']:

@@ -193,7 +193,7 @@ class metaDataConnection:
             self.resetSqlConnection()
 
         try:
-            query = ("SELECT sample_name, porechop, map FROM Run")
+            query = ("SELECT sample_name, porechop, map, flow, kit FROM Run")
             self.cursor.execute(query)
 
             runs = {}
@@ -204,6 +204,14 @@ class metaDataConnection:
         except mysql.connector.Error as err:
             logging.exception("Could not access runs DB: {}".format(err))
             return -1
+
+    def getPreRunFields(self):
+        porechop = ['normal', 'strict', 'guppy']
+        taxIds = [485, 813, 1045]
+        flowcells = ['FLO-MIN106', 'FLO-MIN107']
+        sequenceKits = ['SQK-LSK108', 'SQK-LSK109', 'SQK-RBK004', 'SQK-RPB004']
+        barcodeKits = ['EXP-NBD104', 'SQK-RBK004', 'SQK-RPB004']
+        return { 'porechop': porechop, 'taxIDs': taxIds, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
 
     def getPreRunInfo(self):
         if not self.activeConnection:
