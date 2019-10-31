@@ -209,8 +209,8 @@ class metaDataConnection:
         porechop = ['normal', 'strict', 'guppy']
         taxIds = [485, 813, 1045]
         flowcells = ['FLO-MIN106', 'FLO-MIN107']
-        sequenceKits = ['SQK-LSK108', 'SQK-LSK109', 'SQK-RBK004', 'SQK-RPB004']
-        barcodeKits = ['EXP-NBD104', 'SQK-RBK004', 'SQK-RPB004']
+        sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
+        barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
         return { 'porechop': porechop, 'taxIDs': taxIds, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
 
     def getPreRunInfo(self):
@@ -218,7 +218,7 @@ class metaDataConnection:
             self.resetSqlConnection()
 
         try:
-            query = ("SELECT sample_name, porechop, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+            query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
             self.cursor.execute(query)
 
             info = {}
@@ -226,7 +226,7 @@ class metaDataConnection:
                 if row['sample_name'] in info:
                     info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'porechop':row['porechop']}
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
