@@ -165,6 +165,24 @@ def getMetadataRun():
 
     return generateResponse(rs,200) 
 
+@app.route('/metadata/run/defaultBarKit/<seqKit>',methods = ['GET'])
+def getdefaultBarKit(seqKit):
+    try:
+        preRunFields = getMetadata().getPreRunFields()
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
+
+    try:
+        barKit = preRunFields['sequenceKits'][seqKit]
+        rs = [1, barKit]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "Sequencing Kit not valid"]
+
+
+    return generateResponse(rs,200) 
+
 @app.route('/metadata/run',methods = ['POST'])
 def addRun():
     if 'json' in request.headers['Content-Type']:

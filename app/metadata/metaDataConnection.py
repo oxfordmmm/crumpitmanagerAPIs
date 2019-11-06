@@ -188,6 +188,21 @@ class metaDataConnection:
         else:
             return valuesData['ID']
 
+    def getRun(self, name:str):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            query = ("SELECT * FROM Run WHERE sample_name = %s")
+            self.cursor.execute(query, (name,))
+
+            for row in self.cursor:
+                return row
+
+        except mysql.connector.Error as err:
+            logging.exception("Could not access runs DB: {}".format(err))
+            return -1
+
     def getRuns(self):
         if not self.activeConnection:
             self.resetSqlConnection()
@@ -253,12 +268,16 @@ class metaDataConnection:
     def addRun(self, post: dict):
         logging.info("Inserting Run {}".format(post['sample_name']))
         try:
+            if self.getRun(post['sample_name']):
+                logging.exception("Run {} already exists".format(post['sample_name']))
+                return "Run {} already exists".format(post["sample_name"])
+
             runID = self.__insertIntoRun(post=post)
             self.__insertIntoMappedSpecies(post=post, runID=runID)
             self.conn.commit()
         except Exception as e:
             logging.exception("Exception {}".format(e))
-            logging.exception("Sample {}".format(post['sample_name']))
+            logging.exception("Run {}".format(post['sample_name']))
             logging.exception(post)
             return str(e)
         return "Inserted Run {}".format(post["sample_name"])
