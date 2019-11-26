@@ -166,6 +166,22 @@ class metaDataConnection:
                 if self.cursor.rowcount < 1:
                     raise mysql.connector.errors.Error("No rows inserted")
 
+    def __insertIntoBarcodes(self, post:dict, runID:str):
+        if 'barcodes' not in post:
+            logging.debug('no barcode information was provided for run {}'.format(post["sample_name"]))
+        else:
+            if not post['barcodes'] == None:
+                for barcode in post['barcodes']:
+                    (queryText, valuesData) = self.__createInsertQuery(values=barcode, fkID=runID, fkColumn='RunID')
+                    query = ("INSERT INTO Barcode " + queryText)
+
+                    if not self.activeConnection:
+                        self.resetSqlConnection()
+
+                    self.cursor.execute(query, valuesData)
+                    if self.cursor.rowcount < 1:
+                        raise mysql.connector.errors.Error("No rows inserted")
+
     def __insertIntoFKTable(self, table:str, idVal:str, idColumn:str, post:dict, fkID:str, fkColumn:str):
         columns = self.getTableColumns(table)
 
@@ -221,9 +237,9 @@ class metaDataConnection:
             return -1
 
     def getPreRunFields(self):
-        porechop = ['normal', 'strict', 'guppy']
+        porechop = ['normal', 'strict', 'guppy', 'gridion', 'off']
         taxIds = [485, 813, 1045]
-        flowcells = ['FLO-MIN106', 'FLO-MIN107']
+        flowcells = ['FLO-MIN106', 'FLO-MIN107', 'FLO-FLG001']
         sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
         barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
         return { 'porechop': porechop, 'taxIDs': taxIds, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
@@ -270,14 +286,15 @@ class metaDataConnection:
         try:
             if self.getRun(post['sample_name']):
                 logging.exception("Run {} already exists".format(post['sample_name']))
-                return "Run {} already exists".format(post["sample_name"])
+                return (-1, "Run {} already exists".format(post["sample_name"]))
 
             runID = self.__insertIntoRun(post=post)
             self.__insertIntoMappedSpecies(post=post, runID=runID)
+            self.__insertIntoBarcodes(post=post, runID=runID)
             self.conn.commit()
         except Exception as e:
             logging.exception("Exception {}".format(e))
             logging.exception("Run {}".format(post['sample_name']))
             logging.exception(post)
-            return str(e)
-        return "Inserted Run {}".format(post["sample_name"])
+            return (-1, str(e))
+        return (1, "Inserted Run {}".format(post["sample_name"]))

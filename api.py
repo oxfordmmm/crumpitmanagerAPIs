@@ -193,7 +193,8 @@ def addRun():
             except:
                 return generateResponse([0 ,"Invalid parameter"])
 
-            rs = [1, getMetadata().addRun(data)]
+            (result, message) = getMetadata().addRun(data)
+            rs = [result, message]
         except Exception as e:
             logger.debug(str(e))
             rs = [-1, "could not connect to SQL db"]
