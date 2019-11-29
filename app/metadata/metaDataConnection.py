@@ -244,13 +244,17 @@ class metaDataConnection:
         barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
         return { 'porechop': porechop, 'taxIDs': taxIds, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
 
-    def getPreRunInfo(self):
+    def getPreRunInfo(self, name:str = None):
         if not self.activeConnection:
             self.resetSqlConnection()
 
         try:
-            query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
-            self.cursor.execute(query)
+            if name != None:
+                query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                self.cursor.execute(query, (name,))
+            else:
+                query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                self.cursor.execute(query)
 
             info = {}
             for row in self.cursor:
@@ -266,7 +270,7 @@ class metaDataConnection:
                     else:
                         info[row['sample_name']]['mapping'] = row['TaxID']
             
-            for run in info.values():
+            for (sample_name, run) in info.items():
                 if (not run['mapping'] == 'off') and (not run['mapping'] == 'on'):
                     mappingSort = run['mapping'].split(' ')
                     mappingSortInt = []
@@ -274,6 +278,14 @@ class metaDataConnection:
                         mappingSortInt.append(int(taxID))
                     mappingSortInt.sort()
                     run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
+                
+                query = ("SELECT sample_name, barcode, name FROM Run LEFT JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s;")
+                self.cursor.execute(query, (sample_name,))
+
+                barcodes = []
+                for row in self.cursor:
+                    barcodes.append({"barcode":row['barcode'], "name":row['name']})
+                run['barcodes'] = barcodes
             
             return info
 

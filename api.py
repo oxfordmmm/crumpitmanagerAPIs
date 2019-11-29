@@ -156,7 +156,7 @@ def getMetadataRuns():
     return generateResponse(rs,200) 
 
 @app.route('/metadata/run',methods = ['GET'])
-def getMetadataRun():
+def getMetadataRunFields():
     try:
         rs = [1, getMetadata().getPreRunFields()]
     except Exception as e:
@@ -201,6 +201,16 @@ def addRun():
 
     else:
         return generateResponse([0,"Unsupported Media Type"])
+
+    return generateResponse(rs,200) 
+
+@app.route('/metadata/run/<runName>',methods = ['GET'])
+def getMetadataRun(runName):
+    try:
+        rs = [1, getMetadata().getPreRunInfo(runName)]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
 
     return generateResponse(rs,200) 
 
