@@ -2,6 +2,7 @@
 import mysql.connector
 import logging
 import uuid
+from dateutil.parser import parse
 
 class metaDataConnection:
     def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta'):
@@ -55,6 +56,24 @@ class metaDataConnection:
                 columns[row['COLUMN_NAME']] = row['IS_NULLABLE']
             
             return columns
+        
+        except mysql.connector.Error as err:
+            logging.exception("Could not access DB: {}".format(err))
+            return []
+
+    def __getCurrentMapIDs(self):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            query = ("SELECT DISTINCT TaxID FROM `Mapped Species` Order By TaxID;")
+            self.cursor.execute(query)
+
+            taxIDs = []
+            for row in self.cursor:
+                taxIDs.append(int(row['TaxID']))
+            
+            return taxIDs
         
         except mysql.connector.Error as err:
             logging.exception("Could not access DB: {}".format(err))
@@ -128,6 +147,8 @@ class metaDataConnection:
                     (mapping, splitMap) = self.__getMapInfo(post)
                     if mapping != None:
                         run[column] = mapping
+                elif column == 'run_date':
+                    run[column] = parse(post[column])
                 else:
                     run[column] = post[column]
             elif not nullable:
@@ -238,11 +259,18 @@ class metaDataConnection:
 
     def getPreRunFields(self):
         porechop = ['normal', 'strict', 'guppy', 'gridion', 'off']
-        taxIds = [485, 813, 1045]
+
+        currentTaxIDs = self.__getCurrentMapIDs()
+        taxIDs = [485, 813, 1045]
+        for taxID in taxIDs:
+            if taxID not in currentTaxIDs:
+                currentTaxIDs.append(taxID)
+
+        currentTaxIDs.sort()
         flowcells = ['FLO-MIN106', 'FLO-MIN107', 'FLO-FLG001']
         sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
         barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
-        return { 'porechop': porechop, 'taxIDs': taxIds, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
+        return { 'porechop': porechop, 'taxIDs': currentTaxIDs, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
 
     def getPreRunInfo(self, name:str = None):
         if not self.activeConnection:
@@ -250,10 +278,10 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT sample_name, run_date, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT sample_name, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT sample_name, run_date, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
@@ -261,7 +289,7 @@ class metaDataConnection:
                 if row['sample_name'] in info:
                     info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
