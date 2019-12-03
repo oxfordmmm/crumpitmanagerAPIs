@@ -22,6 +22,7 @@ except ImportError:
 import datetime
 from bson.objectid import ObjectId
 from werkzeug import Response
+from ete3 import NCBITaxa
 
 import app.config
 from app.liveRuns.runsInfo import *
@@ -82,6 +83,14 @@ def getMetadata():
         return metaDataConnection(sqlDBcfg['ip'])
     
     return metaDataConnection(sqlDBcfg['ip'], sqlDBcfg['port'])
+
+def getSpeciesFromTaxID(taxID):
+    ncbi = NCBITaxa()
+    taxid2name = ncbi.get_taxid_translator([taxID])
+    if len(taxid2name) > 0:
+        return taxid2name[int(taxID)]
+    else:
+        return str(taxID)
 
 setup_logging()
 logger = logging.getLogger('api')
@@ -158,7 +167,14 @@ def getMetadataRuns():
 @app.route('/metadata/run',methods = ['GET'])
 def getMetadataRunFields():
     try:
-        rs = [1, getMetadata().getPreRunFields()]
+        returnDict = getMetadata().getPreRunFields()
+        taxIDs = returnDict['taxIDs']
+        taxIDs.sort()
+        taxIDDict = dict()
+        for taxID in taxIDs:
+            taxIDDict[taxID] = getSpeciesFromTaxID(taxID)
+        returnDict['taxIDs'] = taxIDDict
+        rs = [1, returnDict]
     except Exception as e:
         logger.debug(str(e))
         rs = [-1, "could not connect to SQL db"]
@@ -214,6 +230,17 @@ def getMetadataRun(runName):
 
     return generateResponse(rs,200) 
 
+@app.route('/taxid/<taxid>',methods = ['GET'])
+def getTaxConversion(taxid):
+    try:
+        taxStr = getSpeciesFromTaxID(taxid)
+        rs = [1, taxStr]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not convert ID"]
+
+    return generateResponse(rs,200) 
+
 @app.route('/backups',methods = ['GET'])
 def getRunBackups():
     dbRuns = getRunsInfo().getRuns()
@@ -253,5 +280,8 @@ if __name__ == '__main__':
         logger.debug("Using flask port %d", port)
     except Exception as e: 
         logger.debug("Using default flask port 5607")
-        
+    
+    print("setting up NCBI Taxa DB")
+    ncbi = NCBITaxa()
+    print("Running api")
     app.run(host='0.0.0.0', port=port)
