@@ -82,7 +82,7 @@ class metaDataConnection:
     def __createInsertQuery(self, values:dict, fkID:str=None, fkColumn:str=None):
         columnsText = "(ID"
         valuesText = "VALUES (%(ID)s"
-        valuesData = { 'ID':str(uuid.uuid4()) }
+        valuesData = { 'ID':uuid.uuid4().bytes }
 
         if fkID:
             columnsText += ", {}".format(fkColumn)
@@ -168,7 +168,7 @@ class metaDataConnection:
         else:
             return valuesData['ID']
 
-    def __insertIntoMappedSpecies(self, post:dict, runID:str):
+    def __insertIntoMappedSpecies(self, post:dict, runID:bytes):
         (mapping, splitMap) = self.__getMapInfo(post)
         
         if splitMap:
@@ -187,7 +187,7 @@ class metaDataConnection:
                 if self.cursor.rowcount < 1:
                     raise mysql.connector.errors.Error("No rows inserted")
 
-    def __insertIntoBarcodes(self, post:dict, runID:str):
+    def __insertIntoBarcodes(self, post:dict, runID:bytes):
         if 'barcodes' not in post:
             logging.debug('no barcode information was provided for run {}'.format(post["sample_name"]))
         else:
@@ -203,7 +203,7 @@ class metaDataConnection:
                     if self.cursor.rowcount < 1:
                         raise mysql.connector.errors.Error("No rows inserted")
 
-    def __insertIntoFKTable(self, table:str, idVal:str, idColumn:str, post:dict, fkID:str, fkColumn:str):
+    def __insertIntoFKTable(self, table:str, idVal:str, idColumn:str, post:dict, fkID:bytes, fkColumn:str):
         columns = self.getTableColumns(table)
 
         valuesDict = { idColumn:idVal }
