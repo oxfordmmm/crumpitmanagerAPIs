@@ -3,9 +3,10 @@ import mysql.connector
 import logging
 import uuid
 from dateutil.parser import parse
+import bson.int64
 
 class metaDataConnection:
-    def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta'):
+    def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta', use_pure=True):
         self.ip = ip
         self.port = port
         self.user = user
@@ -29,7 +30,7 @@ class metaDataConnection:
     def resetSqlConnection(self):
         self.activeConnection = 0
         try:
-            self.conn = mysql.connector.connect(user=self.user, database=self.database, host=self.ip, port=self.port, password=self.password, connection_timeout=10)
+            self.conn = mysql.connector.connect(user=self.user, database=self.database, host=self.ip, port=self.port, password=self.password, connection_timeout=10, use_pure=True)
             self.cursor = self.conn.cursor(dictionary=True)
             self.activeConnection = 1
         except mysql.connector.Error as err:
@@ -101,6 +102,8 @@ class metaDataConnection:
                 valuesData[column] = 0
             elif isinstance(value, str) and (value.lower() == "true" or value.lower() == 'y'):
                 valuesData[column] = 1
+            elif isinstance(value, bson.int64.Int64):
+                valuesData[column] = str(value)
             else:
                 valuesData[column] = value
         
@@ -307,12 +310,12 @@ class metaDataConnection:
                     mappingSortInt.sort()
                     run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
                 
-                query = ("SELECT sample_name, barcode, name FROM Run LEFT JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT barcode, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s ORDER BY barcode;")
                 self.cursor.execute(query, (sample_name,))
 
                 barcodes = []
                 for row in self.cursor:
-                    barcodes.append({"barcode":row['barcode'], "name":row['name']})
+                    barcodes.append({"barcode":row['barcode'], "name":row['name'], "total_bases":row['total_bases'], "total_reads":row['total_reads'], "unclassified_bases":row['unclassified_bases'], "unclassified_reads":row['unclassified_reads']})
                 run['barcodes'] = barcodes
             
             return info

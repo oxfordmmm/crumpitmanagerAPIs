@@ -2,6 +2,8 @@ venv
 .vscode
 __pycache__
 
+taxdump.tar.gz
+
 *.log
 *.csv
 *.png
