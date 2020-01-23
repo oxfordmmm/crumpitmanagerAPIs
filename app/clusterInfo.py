@@ -196,9 +196,9 @@ class clusterInfo:
         splitLine = currentline.strip().split('-')
 
         stepResult = {}
-        stepResult['result'] = int(splitLine[-1].strip('() \n'))
+        stepResult['backup'] = int(splitLine[-1].strip('() \n'))
             # TODO deal with -1 status
-        if stepResult['result'] == 1 or stepResult['result'] == 2:
+        if stepResult['backup'] == 1 or stepResult['backup'] == 2:
             stepResult['step'] = splitLine[-4].strip()
         else:
             stepResult['step'] = splitLine[-3].strip()
@@ -216,7 +216,7 @@ class clusterInfo:
             except:
                 pass
 
-        if stepResult['result'] == 0 and currentline:
+        if stepResult['backup'] == 0 and currentline:
             lineLen = len(currentline.strip())
             while len(currentline.strip()) != 0 and currentline:
                 currentline = fileStream.readline()
@@ -340,7 +340,7 @@ class clusterInfo:
                         for run in remoteBackup.keys():
                             if run in runStatusDict:
                                 for step, values in runStatusDict[run].items():
-                                    values['remoteResult'] = remoteBackup[run][step]['result']
+                                    values['remoteBackup'] = remoteBackup[run][step]['backup']
                 except Exception as e:
                     print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                     print(e)
