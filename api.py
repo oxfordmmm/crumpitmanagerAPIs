@@ -28,6 +28,7 @@ import app.config
 from app.liveRuns.runsInfo import *
 from app.clusterInfo import *
 from app.metadata.metaDataConnection import *
+from app.nanoporeSeqOptions import *
 
 class MongoJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -83,6 +84,18 @@ def getMetadata():
         return metaDataConnection(sqlDBcfg['ip'])
     
     return metaDataConnection(sqlDBcfg['ip'], sqlDBcfg['port'])
+
+def getNanoporeOptions():
+    try:
+        nanoporeOptionscfg = cfg.get('nanoporeOptions')
+    except Exception as e:
+        return None
+    try:
+        nanoporeOptionscfg['barcodeFile']
+    except Exception as e:    
+        return nanoporeSeqOptions(nanoporeOptionscfg['basecallerFile'])
+    
+    return nanoporeSeqOptions(nanoporeOptionscfg['basecallerFile'], nanoporeOptionscfg['barcodeFile'])
 
 def getSpeciesFromTaxID(taxID):
     ncbi = NCBITaxa()
@@ -168,6 +181,7 @@ def getMetadataRuns():
 def getMetadataRunFields():
     try:
         returnDict = getMetadata().getPreRunFields()
+        returnDict.update({'flowcells': getNanoporeOptions().getFlowcells()})
         taxIDs = returnDict['taxIDs']
         taxIDs.sort()
         taxIDDict = dict()
@@ -181,22 +195,24 @@ def getMetadataRunFields():
 
     return generateResponse(rs,200) 
 
-@app.route('/metadata/run/defaultBarKit/<seqKit>',methods = ['GET'])
-def getdefaultBarKit(seqKit):
+@app.route('/metadata/run/seqKits/<flowcell>',methods = ['GET'])
+def getSeqKits(flowcell):
     try:
-        preRunFields = getMetadata().getPreRunFields()
+        seqKits = getNanoporeOptions().getSequencingKitsForFlowcell(flowcell)
+        rs = [1, seqKits]
     except Exception as e:
         logger.debug(str(e))
-        rs = [-1, "could not connect to SQL db"]
+        rs = [-1, "flowcell not valid"]
+    return generateResponse(rs,200)
 
+@app.route('/metadata/run/barcoding/<flowcell>/<seqKit>',methods = ['GET'])
+def getBarcoding(flowcell, seqKit):
     try:
-        barKit = preRunFields['sequenceKits'][seqKit]
-        rs = [1, barKit]
+        barcoding = getNanoporeOptions().getBarcodesForSeqkit(flowcell, seqKit)
+        rs = [1, barcoding]
     except Exception as e:
         logger.debug(str(e))
-        rs = [-1, "Sequencing Kit not valid"]
-
-
+        rs = [-1, "Sequencing kit not valid"]
     return generateResponse(rs,200) 
 
 @app.route('/metadata/run',methods = ['POST'])
@@ -227,6 +243,18 @@ def getMetadataRun(runName):
     except Exception as e:
         logger.debug(str(e))
         rs = [-1, "could not connect to SQL db"]
+
+    return generateResponse(rs,200) 
+
+@app.route('/nanoporeKits',methods = ['GET'])
+def getNanoporeKits():
+    try:
+        nanoporeOptions = cfg.get('nanoporeOptions')
+        kitStr = getNanoporeOptions().getFlowcells()
+        rs = [1, kitStr]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not get Nanopore Data"]
 
     return generateResponse(rs,200) 
 

@@ -5,6 +5,8 @@ import uuid
 from dateutil.parser import parse
 import bson.int64
 
+from app.nanoporeSeqOptions import *
+
 class metaDataConnection:
     def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta', use_pure=True):
         self.ip = ip
@@ -270,10 +272,12 @@ class metaDataConnection:
                 currentTaxIDs.append(taxID)
 
         currentTaxIDs.sort()
-        flowcells = ['FLO-MIN106', 'FLO-MIN107', 'FLO-FLG001']
-        sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
-        barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
-        return { 'porechop': porechop, 'taxIDs': currentTaxIDs, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
+        #flowcells = ['FLO-MIN106', 'FLO-MIN107', 'FLO-FLG001']
+        #sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
+        #barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
+        #return { 'porechop': porechop, 'taxIDs': currentTaxIDs, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
+
+        return { 'porechop': porechop, 'taxIDs': currentTaxIDs }
 
     def getPreRunInfo(self, name:str = None):
         if not self.activeConnection:

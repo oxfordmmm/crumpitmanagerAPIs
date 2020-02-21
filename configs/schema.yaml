@@ -1,5 +1,11 @@
 {
   'logDir': {'type': 'string'},
+  'nanoporeOptions': {'required': False, 'type' : 'dict',
+    'schema': {
+      'basecallerFile': {'type': 'string'},
+      'barcodeFile': {'type': 'string'}
+    }
+  },
   'flask': {'required': False, 'type' : 'dict',
     'schema': {
       'port': {'type': 'integer'}

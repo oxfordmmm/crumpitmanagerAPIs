@@ -1,4 +1,8 @@
 logDir: '/var/log/CrumpitManagerLogs'
+nanoporeOptions: {
+  basecallerFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/basecaller_workflows_20200220.txt',
+  barcodeFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/barcoder_kits_20200220.txt'
+}
 flask: {
   port: 5607
 }
@@ -15,18 +19,32 @@ clusterInfo: {
     {
       name: 'grid1',
       IP: '127.0.0.1',
-      mountLocation: '/mnt/gridX'
+      mountLocation: '/home/jez/NanoporeServer/gridX'
+    },
+    {
+      name: 'grid2',
+      IP: '127.0.0.1',
+      mountLocation: '/home/jez/NanoporeServer/gridX'
     }
   ],
-  storageLocation: '/mnt/nanostore',
+  storageLocation: '/home/jez/NanoporeServer/nanostore',
   remoteStorage: [
     {
-      name: 'Location1',
-      IP: '127.0.0.1',
-      sshUsername: 'jez',
+      name: 'CS',
+      IP: 'analysis1.mmmoxford.uk',
+      port: 8081,
+      sshUsername: 'jez@ndm.local',
       backupOrder: 1,
-      storageLocation: '/mnt/backup/Nanopore',
-      logDir: '/var/log/CrumpitManagerLogs'
+      storageLocation: '/mnt/microbio/Nanopore',
+      logDir: '/var/log/RESCOMPBackupLogs/progress'
+    },
+    {
+      name: 'RESCOMP',
+      IP: 'rescomp.well.ox.ac.uk',
+      sshUsername: 'jez',
+      backupOrder: 2,
+      storageLocation: '/arc/bag/mmmbackup/microbio/Nanopore',
+      tunnelIP: 'dingo'
     }
   ]
 }
