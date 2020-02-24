@@ -244,19 +244,17 @@ def getMetadataRun(runName):
         logger.debug(str(e))
         rs = [-1, "could not connect to SQL db"]
 
-    return generateResponse(rs,200) 
+    return generateResponse(rs,200)
 
-@app.route('/nanoporeKits',methods = ['GET'])
-def getNanoporeKits():
+@app.route('/metadata/sample/<guid>',methods = ['GET'])
+def getMetadataBarcode(guid):
     try:
-        nanoporeOptions = cfg.get('nanoporeOptions')
-        kitStr = getNanoporeOptions().getFlowcells()
-        rs = [1, kitStr]
+        rs = [1, getMetadata().getBarcodeInfo(guid)]
     except Exception as e:
         logger.debug(str(e))
-        rs = [-1, "could not get Nanopore Data"]
+        rs = [-1, "could not connect to SQL db"]
 
-    return generateResponse(rs,200) 
+    return generateResponse(rs,200)  
 
 @app.route('/taxid/<taxid>',methods = ['GET'])
 def getTaxConversion(taxid):

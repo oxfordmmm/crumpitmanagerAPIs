@@ -314,15 +314,35 @@ class metaDataConnection:
                     mappingSortInt.sort()
                     run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
                 
-                query = ("SELECT barcode, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s ORDER BY barcode;")
+                query = ("SELECT barcode, `Barcode`.ID_text AS sampleID, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s ORDER BY length(barcode), barcode;")
                 self.cursor.execute(query, (sample_name,))
 
                 barcodes = []
                 for row in self.cursor:
-                    barcodes.append({"barcode":row['barcode'], "name":row['name'], "total_bases":row['total_bases'], "total_reads":row['total_reads'], "unclassified_bases":row['unclassified_bases'], "unclassified_reads":row['unclassified_reads']})
+                    barcodes.append({"barcode":row['barcode'], "sampleID":row['sampleID'], "name":row['name'], "total_bases":row['total_bases'], "total_reads":row['total_reads'], "unclassified_bases":row['unclassified_bases'], "unclassified_reads":row['unclassified_reads']})
                 run['barcodes'] = barcodes
             
             return info
+
+        except mysql.connector.Error as err:
+            logging.exception("Could not access runs DB: {}".format(err))
+            return -1
+
+    def getBarcodeInfo(self, guid:str = None):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            if guid != None:
+                query = ("SELECT `Barcode`.ID_text AS 'ID', name as 'barcode_name', sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
+                self.cursor.execute(query, (guid,))
+            else:
+                logging.exception("Need to request a specific sample GUID")
+                return -1
+
+            for row in self.cursor:
+                return row
+            return -1
 
         except mysql.connector.Error as err:
             logging.exception("Could not access runs DB: {}".format(err))
@@ -334,6 +354,15 @@ class metaDataConnection:
             if self.getRun(post['sample_name']):
                 logging.exception("Run {} already exists".format(post['sample_name']))
                 return (-1, "Run {} already exists".format(post["sample_name"]))
+            
+            if 'barcodes' not in post or post['barcodes'] == None:
+                logging.debug('No Samples were provided for run {}'.format(post["sample_name"]))
+                return (-1, "No Samples were provided for run {}".format(post["sample_name"]))
+            else:
+                for barcode in post['barcodes']:
+                    if 'name' not in barcode or barcode['name'] == None:
+                        logging.debug('An empty sample was provided for run {}. Please report this error'.format(post["sample_name"]))
+                        return (-1, "An empty sample was provided for run {}. Please report this error".format(post["sample_name"]))
 
             runID = self.__insertIntoRun(post=post)
             self.__insertIntoMappedSpecies(post=post, runID=runID)
