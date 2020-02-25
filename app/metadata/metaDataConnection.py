@@ -263,7 +263,11 @@ class metaDataConnection:
             return -1
 
     def getPreRunFields(self):
-        porechop = ['normal', 'strict', 'guppy', 'gridion', 'off']
+        porechop = {'normal': 'Default porechop', 
+        'strict': 'Strict porechop', 
+        'guppy': 'Default guppy', 
+        'guppy_strict': 'Strict guppy', 
+        'off': 'No demultiplexing is required or demultiplexing will occur on the GridION.'}
 
         currentTaxIDs = self.__getCurrentMapIDs()
         taxIDs = [485, 813, 1045]
@@ -363,6 +367,9 @@ class metaDataConnection:
                     if 'name' not in barcode or barcode['name'] == None:
                         logging.debug('An empty sample was provided for run {}. Please report this error'.format(post["sample_name"]))
                         return (-1, "An empty sample was provided for run {}. Please report this error".format(post["sample_name"]))
+
+                    if 'sampleID' in barcode:
+                        del barcode['sampleID']
 
             runID = self.__insertIntoRun(post=post)
             self.__insertIntoMappedSpecies(post=post, runID=runID)
