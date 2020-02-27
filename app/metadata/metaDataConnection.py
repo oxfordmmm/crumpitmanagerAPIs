@@ -250,7 +250,7 @@ class metaDataConnection:
             self.resetSqlConnection()
 
         try:
-            query = ("SELECT sample_name, porechop, map, flow, kit FROM Run")
+            query = ("SELECT sample_name, basecalling, porechop, map, flow, kit FROM Run")
             self.cursor.execute(query)
 
             runs = {}
@@ -289,10 +289,10 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT sample_name, run_date, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT sample_name, run_date, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
@@ -300,7 +300,7 @@ class metaDataConnection:
                 if row['sample_name'] in info:
                     info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
