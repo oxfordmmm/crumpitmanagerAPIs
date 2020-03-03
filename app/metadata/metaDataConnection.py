@@ -276,11 +276,6 @@ class metaDataConnection:
                 currentTaxIDs.append(taxID)
 
         currentTaxIDs.sort()
-        #flowcells = ['FLO-MIN106', 'FLO-MIN107', 'FLO-FLG001']
-        #sequenceKits = {'SQK-LSK108':'EXP-NBD104', 'SQK-LSK109':'EXP-NBD104', 'SQK-RBK004':None, 'SQK-RPB004':None}
-        #barcodeKits = ['EXP-NBD104', 'A.N.OtherKit']
-        #return { 'porechop': porechop, 'taxIDs': currentTaxIDs, 'flowcells': flowcells, 'sequenceKits': sequenceKits, 'barcodeKits': barcodeKits }
-
         return { 'porechop': porechop, 'taxIDs': currentTaxIDs }
 
     def getPreRunInfo(self, name:str = None):
@@ -289,10 +284,10 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
@@ -300,7 +295,7 @@ class metaDataConnection:
                 if row['sample_name'] in info:
                     info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'] }
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
