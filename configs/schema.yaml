@@ -20,7 +20,8 @@
   'sqlDB': {'required': False, 'type' : 'dict',
     'schema': {
       'ip': {'type': 'string'},
-      'port': {'required': False, 'type': 'integer'}
+      'port': {'required': False, 'type': 'integer'},
+      'database': {'required': False, 'type': 'string'}
     }
   },
   'clusterInfo': {

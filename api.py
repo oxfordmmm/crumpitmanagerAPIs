@@ -76,14 +76,40 @@ def getRunsInfo():
 def getMetadata():
     try:
         sqlDBcfg = cfg.get('sqlDB')
+        try:
+            sqlDBcfg['ip']
+            try:
+                sqlDBcfg['port']
+                try:
+                    sqlDBcfg['database']
+                    return metaDataConnection(ip=sqlDBcfg['ip'], port=sqlDBcfg['port'], database=sqlDBcfg['database'])
+                except Exception as e:
+                    return metaDataConnection(ip=sqlDBcfg['ip'], port=sqlDBcfg['port'])
+            except Exception as e:
+                try:
+                    sqlDBcfg['database']
+                    return metaDataConnection(ip=sqlDBcfg['ip'], database=sqlDBcfg['database'])
+                except Exception as e:
+                    return metaDataConnection(ip=sqlDBcfg['ip'])
+        except:
+            try:
+                sqlDBcfg['port']
+                try:
+                    sqlDBcfg['database']
+                    return metaDataConnection(port=sqlDBcfg['port'], database=sqlDBcfg['database'])
+                except Exception as e:
+                    return metaDataConnection(port=sqlDBcfg['port'])
+            except Exception as e:
+                try:
+                    sqlDBcfg['database']
+                    return metaDataConnection(database=sqlDBcfg['database'])
+                except Exception as e:
+                    logging.exception('Config file does not contain valid sql info, using defaults')
+
     except Exception as e:
-        return metaDataConnection()
-    try:
-        sqlDBcfg['port']
-    except Exception as e:    
-        return metaDataConnection(sqlDBcfg['ip'])
-    
-    return metaDataConnection(sqlDBcfg['ip'], sqlDBcfg['port'])
+        logging.exception('Could not find sql config info, using defaults')
+
+    return metaDataConnection()
 
 def getNanoporeOptions():
     try:
