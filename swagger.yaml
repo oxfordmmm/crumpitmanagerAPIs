@@ -2,13 +2,66 @@ openapi: 3.0.1
 info:
   title: crumpitManager
   description: Crumpit Manager APIs
-  version: '0.1'
+  version: '0.2'
 servers:
   - url: 'http://192.168.113.133:5607'
 paths:
-  /runs:
+  /liveRuns:
     get:
-      description: Get all the runs
+      description: Get data on all the runs processed by CRuMPIT
+      responses:
+        '200':
+          description: A list of all runs processed by CRuMPIT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/liveRunData'
+                  status:
+                    type: integer
+  /liveRuns/graph:
+    get:
+      description: Get a graph showing the times runs have been processed by CRuMPIT
+      responses:
+        '200':
+          description: Graph of processed runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      image:
+                        type: string
+                        format: binary
+                  status:
+                    type: integer
+  /liveRuns/liveStats:
+    get:
+      description: Get all the stats for all runs that are currently being processed by CRuMPIT
+      responses:
+        '200':
+          description: A list of live runs stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/liveRunStats'
+                  status:
+                    type: integer
+  /metadata/runs:
+    get:
+      description: Get the metadata on all Nanopore runs
       responses:
         '200':
           description: A list of all runs
@@ -20,15 +73,16 @@ paths:
                   data:
                     type: object
                     additionalProperties:
-                      $ref: '#/components/schemas/run'
+                      $ref: '#/components/schemas/metadataRunData'
                   status:
                     type: integer
-  /runs/liveStats:
+
+  /metadata/run:
     get:
-      description: Get all the live runs
+      description: Get the metadata options for a run
       responses:
         '200':
-          description: A list of live runs
+          description: Metadata options
           content:
             application/json:
               schema:
@@ -37,12 +91,162 @@ paths:
                   data:
                     type: object
                     additionalProperties:
-                      $ref: '#/components/schemas/liveRun'
+                      $ref: '#/components/schemas/metadataRunOptions'
                   status:
                     type: integer
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/metadataRunData'
+      responses:
+        '200':
+          description: Metadata options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                  status:
+                    type: integer
+        
+
+  /metadata/run/{runName}:
+    get:
+      description: Get a run's metadata
+      parameters:
+        - name: runName
+          in: path
+          description: Run Name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/metadataRunData'
+                  status:
+                    type: integer
+
+  /metadata/run/seqKits/{flowcell}:
+    get:
+      description: Get the Sequencing kits for a flowcell
+      parameters:
+        - name: flowcell
+          in: path
+          description: Flowcell Name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of sequencing kits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                  status:
+                    type: integer
+
+  /metadata/run/barcoding/{flowcell}/{seqKit}:
+    get:
+      description: Get the Sequencing kits for a flowcell
+      parameters:
+        - name: flowcell
+          in: path
+          description: Flowcell Name
+          required: true
+          schema:
+            type: string
+        - name: seqKit
+          in: path
+          description: Sequencing kit Name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of barcoding kits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                  status:
+                    type: integer
+
+  /metadata/sample/{guid}:
+    get:
+      description: Get a samples's metadata
+      parameters:
+        - name: guid
+          in: path
+          description: Sample GUID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sample metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/metadataSample'
+                  status:
+                    type: integer
+
+  /taxid/{taxid}:
+    get:
+      description: Get a TaxID's species
+      parameters:
+        - name: taxid
+          in: path
+          description: TaxanomicID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Sample metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                  status:
+                    type: integer
+
   /backups:
     get:
-      description: Get the status of backups
+      description: Get the status of backups to remote locations
       responses:
         '200':
           description: List of Runs and backup status
@@ -58,9 +262,44 @@ paths:
                   status:
                     type: integer
 
+  /clusterInfo:
+    get:
+      description: Get the status of the CRuMPIT cluster
+      responses:
+        '200':
+          description: Cluster status data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      localInfo:
+                        type: object
+                        properties:
+                          grids:
+                            type: object
+                            additionalProperties:
+                              $ref: '#/components/schemas/clusterLocation'
+                          storage:
+                            type: object
+                            properties:
+                              diskUse:
+                                type: integer
+                              diskSize:
+                                type: integer
+                      remoteInfo:
+                        type: object
+                        additionalProperties:
+                          $ref: '#/components/schemas/clusterLocation'
+                  status:
+                    type: integer
+
 components:
   schemas:
-    run:
+    liveRunData:
       type: object
       properties:
         starttime:
@@ -83,7 +322,7 @@ components:
           type: integer
           format: int32
 
-    liveRun:
+    liveRunStats:
       type: object
       properties:
         batches:
@@ -105,6 +344,113 @@ components:
         percent:
           type: number
 
+    metadataRunData:
+      type: object
+      properties:
+        sample_name:
+          type: string
+        mapping: 
+          type: string
+        bar_kit:
+          type: string
+          nullable: true
+        wash_number:
+          type: integer
+          nullable: true
+        run_date:
+          type: string
+          format: date
+        flow: 
+          type: string
+          format: date
+        basecalling: 
+          type: string
+        watch_hours: 
+          type: integer 
+        seq_kit:
+          type: string
+        porechop: 
+          type: string
+        barcodes: 
+          type: array
+          items:
+            $ref: '#/components/schemas/metadataBarcode'
+        
+    metadataBarcode:
+      type: object
+      properties:
+        sampleID: 
+          type: string
+          format: uuid
+        name:
+          type: string
+        barcode: 
+          type: string        
+        total_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        total_reads:
+          type: integer
+          format: int
+          nullable: true
+        unclassified_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        unclassified_reads:
+          type: integer
+          nullable: true
+
+
+    metadataSample:
+      type: object
+      properties:
+        run_name: 
+          type: string
+        ID:
+          type: string
+          format: uuid
+        barcode:
+          type: string
+        barcode_name:
+          type: string
+        total_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        total_reads:
+          type: integer
+          format: int
+          nullable: true
+        unclassified_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        unclassified_reads:
+          type: integer
+          nullable: true
+
+    metadataRunOptions:
+      type: object
+      properties:
+        flowcells:
+          type: array
+          items:
+            type: string
+        taxIDs: 
+          type: object
+          additionalProperties:
+            type: string
+        porechop:
+          type: object
+          additionalProperties:
+            type: string
+
     backup:
       type: object
       properties:
@@ -114,3 +460,13 @@ components:
           type: integer
         f5s:
           type: integer
+
+    clusterLocation:
+      type: object
+      properties:
+        diskUse:
+          type: integer
+        diskSize:
+          type: integer
+        status:
+          type: boolean
