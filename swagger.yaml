@@ -73,7 +73,7 @@ paths:
                   data:
                     type: object
                     additionalProperties:
-                      $ref: '#/components/schemas/metadataRunData'
+                      $ref: '#/components/schemas/metadataSummaryRunData'
                   status:
                     type: integer
 
@@ -100,7 +100,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/metadataRunData'
+              $ref: '#/components/schemas/metadataSummaryRunData'
       responses:
         '200':
           description: Metadata options
@@ -136,7 +136,7 @@ paths:
                   data:
                     type: object
                     additionalProperties:
-                      $ref: '#/components/schemas/metadataRunData'
+                      $ref: '#/components/schemas/metadataFullRunData'
                   status:
                     type: integer
 
@@ -344,7 +344,7 @@ components:
         percent:
           type: number
 
-    metadataRunData:
+    metadataSummaryRunData:
       type: object
       properties:
         sample_name:
@@ -374,18 +374,22 @@ components:
         barcodes: 
           type: array
           items:
-            $ref: '#/components/schemas/metadataBarcode'
-        
-    metadataBarcode:
+            $ref: '#/components/schemas/metadataSummaryBarcode'
+
+    metadataSummaryBarcode:
       type: object
       properties:
+        run_name: 
+          type: string
         sampleID: 
           type: string
           format: uuid
         name:
           type: string
-        barcode: 
-          type: string        
+        barcode:
+          type: string
+        barcode_name:
+          type: string     
         total_bases:
           type: integer
           format: int64
@@ -404,13 +408,80 @@ components:
           type: integer
           nullable: true
 
+    metadataFullRunData:
+      type: object
+      properties:
+        sample_name:
+          type: string
+        mapping: 
+          type: string
+        bar_kit:
+          type: string
+          nullable: true
+        wash_number:
+          type: integer
+          nullable: true
+        run_date:
+          type: string
+          format: date
+        flow: 
+          type: string
+          format: date
+        basecalling: 
+          type: string
+        watch_hours: 
+          type: integer 
+        seq_kit:
+          type: string
+        porechop: 
+          type: string
+        barcodes: 
+          type: array
+          items:
+            $ref: '#/components/schemas/metadataFullBarcode'
+        
+    metadataFullBarcode:
+      type: object
+      properties:
+        run_name: 
+          type: string
+        sampleID: 
+          type: string
+          format: uuid
+        name:
+          type: string
+        barcode:
+          type: string
+        barcode_name:
+          type: string     
+        total_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        total_reads:
+          type: integer
+          format: int
+          nullable: true
+        unclassified_bases:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: true
+        unclassified_reads:
+          type: integer
+          nullable: true
+        mapped_species:
+          type: array
+          items:
+            $ref: '#/components/schemas/metadataSpecies'
 
     metadataSample:
       type: object
       properties:
         run_name: 
           type: string
-        ID:
+        sampleID:
           type: string
           format: uuid
         barcode:
@@ -434,6 +505,28 @@ components:
         unclassified_reads:
           type: integer
           nullable: true
+        mapped_species:
+          type: array
+          items:
+            $ref: '#/components/schemas/metadataSpecies'
+
+    metadataSpecies:
+      type: object
+      properties:
+        taxID: 
+          type: string
+        kingdom_name:
+          type: string
+        bases:
+          type: integer
+          format: int64
+          minimum: 0
+        sequence_reads:
+          type: integer
+          format: int
+        filtered:
+          type: integer
+          format: int
 
     metadataRunOptions:
       type: object
