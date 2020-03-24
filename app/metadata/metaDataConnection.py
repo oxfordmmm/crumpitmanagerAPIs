@@ -284,18 +284,19 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
+            
             for row in self.cursor:
                 if row['sample_name'] in info:
                     info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'] }
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'RunID':row['RunID'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
@@ -313,12 +314,31 @@ class metaDataConnection:
                     mappingSortInt.sort()
                     run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
                 
-                query = ("SELECT barcode, `Barcode`.ID_text AS sampleID, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE sample_name = %s ORDER BY length(barcode), barcode;")
-                self.cursor.execute(query, (sample_name,))
+                query = ("SELECT barcode, `Barcode`.ID_text AS sampleID, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE Run.ID_text = %s ORDER BY length(barcode), barcode;")
+                self.cursor.execute(query, (info[sample_name]['RunID'],))
 
                 barcodes = []
                 for row in self.cursor:
                     barcodes.append({"barcode":row['barcode'], "sampleID":row['sampleID'], "name":row['name'], "total_bases":row['total_bases'], "total_reads":row['total_reads'], "unclassified_bases":row['unclassified_bases'], "unclassified_reads":row['unclassified_reads']})
+                
+                if name != None:
+                    query = ("SELECT b.ID_text as BarcodeID, TaxID as taxID, k.name AS kingdom_name, cs.bases, cs.sequenceReads as sequence_reads, cs.filtered  \
+                        FROM NanoporeMeta.`Classified Species` AS cs \
+                        JOIN NanoporeMeta.Kingdom as k ON cs.KingdomID = k.ID \
+                        JOIN NanoporeMeta.Barcode as b ON k.BarcodeID = b.ID \
+                        JOIN NanoporeMeta.Run as r ON b.RunID = r.ID \
+                        WHERE r.ID_text = %s and filtered = 1 \
+                        ORDER BY cs.bases DESC;")
+                    self.cursor.execute(query, (info[sample_name]['RunID'],))
+
+                    for row in self.cursor:
+                        for barcode in barcodes:
+                            if row['BarcodeID'] == barcode['sampleID']:
+                                if 'mapped_species' in barcode:
+                                    barcode['mapped_species'].append({"taxID": row['taxID'], "kingdom_name": row['kingdom_name'], "bases": row['bases'], "sequence_reads":row['sequence_reads'], "filtered":row['filtered']})
+                                else:
+                                    barcode['mapped_species'] = [{"taxID": row['taxID'], "kingdom_name": row['kingdom_name'], "bases": row['bases'], "sequence_reads":row['sequence_reads'], "filtered":row['filtered']}]
+
                 run['barcodes'] = barcodes
             
             return info
@@ -333,15 +353,30 @@ class metaDataConnection:
 
         try:
             if guid != None:
-                query = ("SELECT `Barcode`.ID_text AS 'ID', name as 'barcode_name', sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
+                query = ("SELECT `Barcode`.ID_text AS 'sampleID', name as 'barcode_name', sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
                 self.cursor.execute(query, (guid,))
             else:
                 logging.exception("Need to request a specific sample GUID")
                 return -1
 
+            resultDict = {}
             for row in self.cursor:
-                return row
-            return -1
+                resultDict = row
+                break
+
+            query = ("SELECT b.ID_text as BarcodeID, TaxID as taxID, k.name AS kingdom_name, cs.bases, cs.sequenceReads as sequence_reads, cs.filtered  \
+                FROM `Classified Species` AS cs \
+                JOIN `Kingdom` AS k  ON cs.KingdomID = k.ID \
+                JOIN `Barcode` AS b ON k.BarcodeID = b.ID \
+                WHERE b.ID_text = %s \
+                ORDER BY cs.bases DESC;")
+            self.cursor.execute(query, (guid,))
+
+            mapped_species = []
+            for row in self.cursor:
+                mapped_species.append({"taxID": row['taxID'], "kingdom_name": row['kingdom_name'], "bases": row['bases'], "sequence_reads":row['sequence_reads'], "filtered":row['filtered']})
+            resultDict['mapped_species'] = mapped_species
+            return resultDict
 
         except mysql.connector.Error as err:
             logging.exception("Could not access runs DB: {}".format(err))
