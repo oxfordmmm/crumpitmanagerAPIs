@@ -400,6 +400,9 @@ class metaDataConnection:
 
                     if 'sampleID' in barcode:
                         del barcode['sampleID']
+                    
+                    if 'mapped_species' in barcode:
+                        del barcode['mapped_species']
 
             runID = self.__insertIntoRun(post=post)
             self.__insertIntoMappedSpecies(post=post, runID=runID)
