@@ -131,6 +131,11 @@ def getSpeciesFromTaxID(taxID):
     else:
         return str(taxID)
 
+def getSpeciesFromTaxIDs(taxIDs):
+    ncbi = NCBITaxa()
+    taxid2name = ncbi.get_taxid_translator(taxIDs)
+    return taxid2name
+
 setup_logging()
 logger = logging.getLogger('api')
 logger.debug("Logging initialized")
@@ -281,6 +286,26 @@ def getMetadataBarcode(guid):
         rs = [-1, "could not connect to SQL db"]
 
     return generateResponse(rs,200)  
+
+@app.route('/taxid',methods = ['POST'])
+def getTaxConversions():
+    if 'json' in request.headers['Content-Type']:
+        try:
+            data = request.json
+            try:
+                print("Params:" + str(data.items()))
+            except:
+                return generateResponse([0 ,"Invalid parameter"])
+
+            rs = [1, getSpeciesFromTaxIDs(data['taxIDs'])]
+        except Exception as e:
+            logger.debug(str(e))
+            rs = [-1, "could not get species"]
+
+    else:
+        return generateResponse([0,"Unsupported Media Type"])
+
+    return generateResponse(rs,200) 
 
 @app.route('/taxid/<taxid>',methods = ['GET'])
 def getTaxConversion(taxid):
