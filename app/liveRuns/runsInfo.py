@@ -40,7 +40,7 @@ class runsInfo:
                 # Try to determine human readable run location (e.g. grid1)
                 log[h['run_name']]['runLocation'] = log[h['run_name']]['cwd'].split('/')[-2]
             except Exception as e:
-                print("Error: Could not load run")
+                print("Error: Could not load run {}".format(h['run_name']))
                 print(e)
                 log[h['run_name']]['PID'] = -1
                 log[h['run_name']]['runLocation'] = ''

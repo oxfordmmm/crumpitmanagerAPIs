@@ -353,7 +353,7 @@ class metaDataConnection:
 
         try:
             if guid != None:
-                query = ("SELECT `Barcode`.ID_text AS 'sampleID', name as 'barcode_name', sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
+                query = ("SELECT `Barcode`.ID_text AS 'sampleID', name, sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
                 self.cursor.execute(query, (guid,))
             else:
                 logging.exception("Need to request a specific sample GUID")
