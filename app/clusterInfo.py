@@ -97,10 +97,10 @@ class clusterInfo:
         except Exception as e:
             print("Did not provide a SSH key, setting default")
 
-        timeout = 10
+        timeout = 5
         try:
             if remoteInfo['timeout'] == 'short':
-                timeout = 2
+                timeout = 1
         except Exception as e:
             print("Did not provide a timeout, setting default")
 
@@ -166,16 +166,6 @@ class clusterInfo:
         remoteDict = {}
         for location in locations:
             try:
-                # adapted from https://stackoverflow.com/a/35625078
-                # Ping
-                ping_str = "-n 1" if  platform.system().lower()=="windows" else "-c 1"
-                args = "ping " + " " + ping_str + " " + location['IP']
-                need_sh = False if  platform.system().lower()=="windows" else True
-                pingResult = subprocess.run(args, stdout=subprocess.DEVNULL ,shell=need_sh).returncode == 0
-                
-                if not pingResult:
-                    location['timeout'] = 'short'
-
                 # Get disk usage and size
                 diskInfo = self.getRemoteDiskInfo(location)
                 
