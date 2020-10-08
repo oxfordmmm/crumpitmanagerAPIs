@@ -175,12 +175,39 @@ class clusterInfo:
                 if diskInfo:
                     remoteDict[location['name']] = {'status':True, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
                 else:
-                    remoteDict[location['name']] = {'status':pingResult}
+                    remoteDict[location['name']] = {'status':False}
             except Exception as e:
                 print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                 print(e)
 
         return remoteDict
+
+    def processDiskLog(self, line, diskLog, backupDict: dict):
+        try:
+            while line:
+                info = line.strip().split("\t")
+                if len(info[0]) > 0:
+                    if info[0] in backupDict:
+                        backupDict[info[0]]['f5s']['diskUse'] = int(info[1]) + int(info[2])
+                        backupDict[info[0]]['basecalled_fastq']['diskUse'] = int(info[3]) + int(info[4])
+
+                line = diskLog.readline()
+        except Exception as e:
+            print("ERROR: Could not read disk file correctly, quiting")
+            print(e)
+
+        return backupDict
+
+    def processLocalDiskLog(self, diskLogFile: str, runStatusDict: dict):
+        try:
+            with open(diskLogFile, 'r') as diskLog:
+                line = diskLog.readline()
+                backupDict = self.processDiskLog(line, diskLog, runStatusDict)
+                return backupDict
+        except Exception as e:
+            print("ERROR: Could not read disk file correctly, quiting")
+            print(e)
+            return runStatusDict
 
     def processStep(self, fileStream, currentline):
         splitLine = currentline.strip().split('-')
@@ -294,9 +321,27 @@ class clusterInfo:
                 print("Could not get data from SSH session, quiting")
                 print(e)
                 return None
+
+            line = stdout.readline()
+            backupDict = self.processBackupLog(line, stdout)
+
+            if tunnelIP:
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'cat', line.strip() + '/disk.tsv', '"']
+            elif line:
+                args = ['cat', line.strip() + '/disk.tsv']
+            else:
+                print('No suitable remote disk - skipping')
+                return backupDict
             
-            line = stdout.readline()                
-            return self.processBackupLog(line, stdout)
+            try:
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
+                print(e)
+                return backupDict
+            
+            line = stdout.readline()
+            return self.processDiskLog(line, stdout, backupDict)
         except Exception as e:
             print("ERROR: Could not read remote log file correctly, quiting")
             print(e)
@@ -316,6 +361,10 @@ class clusterInfo:
             for gridLogFile in glob.glob(gridPath):
                 gridDict = self.processLocalBackupLog(gridLogFile)
                 runStatusDict.update(gridDict)
+            
+            # Add disk use if present
+            diskPath = os.path.join(recentLogDir,"disk.tsv")
+            runStatusDict = self.processLocalDiskLog(diskPath, runStatusDict)
         else:
             print("Error: Could not find local backup log location")
 

@@ -322,7 +322,7 @@ def getTaxConversion(taxid):
 def getRunBackups():
     dbRuns = getRunsInfo().getRuns()
     rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns, cfg.get('clusterInfo')['remoteStorage'])]
-    return generateResponse(rs,200) 
+    return generateResponse(rs,200)
 
 @app.route('/clusterInfo',methods = ['GET'])
 def getClusterInfo():
