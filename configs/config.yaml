@@ -1,4 +1,5 @@
-logDir: '/var/log/CrumpitManagerLogs'
+logDir: '/var/log/CrumpitManagerLogs/progress'
+diskDir: '/var/log/CrumpitManagerLogs/disk'
 nanoporeOptions: {
   basecallerFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/basecaller_workflows_20200220.txt',
   barcodeFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/barcoder_kits_20200220.txt'
@@ -36,7 +37,8 @@ clusterInfo: {
       sshUsername: 'jez@ndm.local',
       backupOrder: 1,
       storageLocation: '/mnt/microbio/Nanopore',
-      logDir: '/var/log/RESCOMPBackupLogs/progress'
+      logDir: '/var/log/RESCOMPBackupLogs/progress',
+      diskDir: '/var/log/RESCOMPBackupLogs/disk'
     },
     {
       name: 'RESCOMP',

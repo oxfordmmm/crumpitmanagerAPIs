@@ -1,5 +1,6 @@
 {
   'logDir': {'type': 'string'},
+  'diskDir': {'required': False, 'type': 'string'},
   'nanoporeOptions': {'required': False, 'type' : 'dict',
     'schema': {
       'basecallerFile': {'type': 'string'},
@@ -51,6 +52,7 @@
             'storageLocation': {'type': 'string'},
             'backupOrder': {'type': 'integer'},
             'logDir': {'required': False,'type': 'string'},
+            'diskDir': {'required': False,'type': 'string'},
             'sshUsername': {'type': 'string'},
             'sshKey': {'required': False, 'type': 'string'},
             'tunnelIP': {'required': False, 'type': 'string'}

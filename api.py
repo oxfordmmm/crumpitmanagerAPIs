@@ -324,6 +324,12 @@ def getRunBackups():
     rs = [1, clusterInfo().getBackupInfo(cfg.get('logDir'), dbRuns, cfg.get('clusterInfo')['remoteStorage'])]
     return generateResponse(rs,200)
 
+@app.route('/runDiskInfo',methods = ['GET'])
+def getRunDiskInfo():
+    dbRuns = getRunsInfo().getRuns()
+    rs = [1, clusterInfo().getRunDiskInfo(cfg.get('diskDir'), dbRuns, cfg.get('clusterInfo')['remoteStorage'])]
+    return generateResponse(rs,200)
+
 @app.route('/clusterInfo',methods = ['GET'])
 def getClusterInfo():
     localInfo = clusterInfo().getLocalInfo(cfg.get('clusterInfo'))
