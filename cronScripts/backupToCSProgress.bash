@@ -29,13 +29,13 @@ function checkProgressOnRunStep()
             output="${outputx%x*}"
 
             if [ "$diffStatus" == "0" ]; then
-                # Check older than 7 days
-                findOlder=$(find $runName/$step -type f -mtime +7 -printf "%f\t%s\n"| wc -l)
+                # Check older than X days
+                findOlder=$(find $runName/$step -type f -mtime +${timeToDelete} -printf "%f\t%s\n"| wc -l)
                 if [ $findOlder -gt 0 ]; then
-                    echo "$runName - $step - Local and Remote same - files older than 7 days, list for deletion - (1)" | tee -a $logFile
+                    echo "$runName - $step - Local and Remote same - files older than ${timeToDelete} days, list for deletion - (1)" | tee -a $logFile
                     echo "${gridName}/${runName}/${step}" >> ${logLoc}/toDelete
                 else
-                    echo "$runName - $step - Local and Remote same - files newer than 7 days, not listing for deletion - (2)" | tee -a $logFile
+                    echo "$runName - $step - Local and Remote same - files newer than ${timeToDelete} days, not listing for deletion - (2)" | tee -a $logFile
                     echo "${gridName}/${runName}/${step}" >> ${logLoc}/futureDelete
                 fi
 
@@ -95,7 +95,7 @@ logLoc="/var/log/CSbackups/progress/${logTime}"
 findLogLoc="${logLoc}/findLogs"
 crumpitOutLoc="/mnt/nanostore"
 outputDir="/mnt/microbio/Nanopore"
-timeToDelete="7"
+timeToDelete="10"
 
 
 mkdir -p $logLoc
