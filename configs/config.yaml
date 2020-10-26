@@ -1,7 +1,7 @@
 logDir: '/var/log/CSbackups/progress'
 nanoporeOptions: {
-  basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_20200220.txt',
-  barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_20200220.txt'
+  basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
+  barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
 }
 flask: {
   port: 5607
