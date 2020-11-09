@@ -1,40 +1,40 @@
-logDir: '/var/log/CrumpitManagerLogs/progress'
-diskDir: '/var/log/CrumpitManagerLogs/disk'
+logDir: '/var/log/CSbackups/progress'
+diskDir: '/var/log/CSbackups/disk'
 nanoporeOptions: {
-  basecallerFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/basecaller_workflows_20200220.txt',
-  barcodeFile: '/home/jez/NanoporeServer/otherDev/crumpitmanagerAPIs/data/barcoder_kits_20200220.txt'
+  basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
+  barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
 }
 flask: {
   port: 5607
 }
 mongoDB: { 
-  ip: '127.0.0.1',
+  ip: '163.1.213.19',
   port: 27017
 }
 sqlDB: {
-  ip: '127.0.0.1',
+  ip: '163.1.213.19',
   port: 3306,
 }
 clusterInfo: {
   gridIONS: [
     {
-      name: 'grid1',
+      name: 'grid0',
       IP: '127.0.0.1',
-      mountLocation: '/home/jez/NanoporeServer/gridX'
+      mountLocation: '/mnt/grid0'
     },
     {
-      name: 'grid2',
+      name: 'grid1',
       IP: '127.0.0.1',
-      mountLocation: '/home/jez/NanoporeServer/gridX'
+      mountLocation: '/mnt/grid1'
     }
   ],
-  storageLocation: '/home/jez/NanoporeServer/nanostore',
+  storageLocation: '/mnt/nanostore',
   remoteStorage: [
     {
       name: 'CS',
       IP: 'analysis1.mmmoxford.uk',
       port: 8081,
-      sshUsername: 'jez@ndm.local',
+      sshUsername: 'nick@ndm.local',
       backupOrder: 1,
       storageLocation: '/mnt/microbio/Nanopore',
       logDir: '/var/log/RESCOMPBackupLogs/progress',
