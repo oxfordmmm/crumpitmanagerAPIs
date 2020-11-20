@@ -175,7 +175,7 @@ class clusterInfo:
                 if diskInfo:
                     remoteDict[location['name']] = {'status':True, 'diskSize':diskInfo['diskSize'], 'diskUse':diskInfo['diskUse']}
                 else:
-                    remoteDict[location['name']] = {'status':pingResult}
+                    remoteDict[location['name']] = {'status':False}
             except Exception as e:
                 print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
                 print(e)
@@ -279,11 +279,11 @@ class clusterInfo:
                 print(e)
                 return None
 
-            line = stdout.readline()
-            if line and tunnelIP:
-                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'cat', line.strip() + '/run.log', '"']
-            elif line:
-                args = ['cat', line.strip() + '/run.log']
+            logLine = stdout.readline()
+            if logLine and tunnelIP:
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'cat', logLine.strip() + '/run.log', '"']
+            elif logLine:
+                args = ['cat', logLine.strip() + '/run.log']
             else:
                 print('No suitable remote log - skipping')
                 return None
@@ -294,8 +294,8 @@ class clusterInfo:
                 print("Could not get data from SSH session, quiting")
                 print(e)
                 return None
-            
-            line = stdout.readline()                
+
+            line = stdout.readline()
             return self.processBackupLog(line, stdout)
         except Exception as e:
             print("ERROR: Could not read remote log file correctly, quiting")
@@ -343,3 +343,118 @@ class clusterInfo:
                     runStatusDict[run]['batches'] = dbRuns[run]['batches']
 
         return runStatusDict
+
+    def processDiskInfo(self, line, diskLog):
+        diskDict = {}
+        try:
+            while line:
+                if line[0] != '#':
+                    info = line.strip().split("\t")
+                    if len(info[0]) > 0 and info[0] != '#':
+                        try:
+                            diskDict[info[0]] = {
+                                'f5s': int(info[1]) + int(info[2]),
+                                'basecalled_fastq': int(info[3]) + int(info[4])
+                            }
+                        except ValueError as e:
+                            print("ERROR: Could not read line {} correctly, skipping".format(line))
+                            print(e)
+
+                line = diskLog.readline()
+        except Exception as e:
+            print("ERROR: Could not read disk file {} correctly, quiting".format(diskLog))
+            print(e)
+
+        return diskDict
+
+    def processLocalDiskInfo(self, diskLogFile: str):
+        diskDict = {}
+        try:
+            with open(diskLogFile, 'r') as diskLog:
+                line = diskLog.readline()
+                backupDict = self.processDiskInfo(line, diskLog)
+                return backupDict
+        except Exception as e:
+            print("ERROR: Could not read local disk file correctly, quiting")
+            print(e)
+            return diskDict
+
+    def processRemoteDiskInfo(self, remoteInfo):
+        try:
+            diskDir = remoteInfo['diskDir']
+        except Exception as e:
+            print("No diskDir for location {0}".format(remoteInfo['name']))
+            return None
+
+        try:
+            client = self.getRemoteConnection(remoteInfo)
+            args = []
+            tunnelIP = None
+            try:
+                tunnelIP = remoteInfo['tunnelIP']
+                print("Using SSH tunnel to {}".format(tunnelIP))
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'find', diskDir, '-maxdepth 1 -regextype posix-extended -regex \'.*/[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}.tsv\' | sort -r | head -n 1', '"']
+            except Exception as e:
+                print("No SSH tunnel needed")
+                args = ['find', diskDir, '-maxdepth 1 -regextype posix-extended -regex \'.*/[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}.tsv\' | sort -r | head -n 1']
+            try:
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
+                print(e)
+                return None
+
+            line = stdout.readline()
+            if line and tunnelIP:
+                args = ['ssh', '{}@{}'.format(remoteInfo['sshUsername'], remoteInfo['tunnelIP']), '"', 'cat', line.strip() , '"']
+            elif line:
+                args = ['cat', line.strip() ]
+            else:
+                print('No suitable remote disk info - skipping')
+                return None
+            
+            try:
+                stdin, stdout, stderr = client.exec_command(' '.join(args))
+            except Exception as e:
+                print("Could not get data from SSH session, quiting")
+                print(e)
+                return None
+
+            line = stdout.readline()
+            return self.processDiskInfo(line, stdout)
+        except Exception as e:
+            print("ERROR: Could not read remote log file correctly, quiting")
+            print(e)
+            return None
+
+        finally:
+            client.close()
+
+    def getRunDiskInfo(self, diskDir: str="", dbRuns: dict={}, locations: dict={}):
+        diskDict = {}
+        if os.path.exists(diskDir):
+            # Find most recent log
+            recentDiskPath = max(glob.glob(os.path.join(diskDir, '*-*-*_*:*:*.tsv')), key=os.path.getmtime)
+
+            # Open local disk info file
+            if recentDiskPath:
+                diskDict = self.processLocalDiskInfo(recentDiskPath)
+        else:
+            print("Error: Could not find local disk info location")
+
+        if len(locations) > 0:
+            for location in locations:
+                try:
+                    # Get backup
+                    remoteDisk = self.processRemoteDiskInfo(location)
+                    
+                    # Put info into dict to be passed on
+                    if remoteDisk:
+                        for run in remoteDisk.keys():
+                            if run in diskDict:
+                                diskDict[run]['remoteDisk'] = remoteDisk[run]
+                except Exception as e:
+                    print("ERROR: Could not process storageLocation {}, skipping".format(location['name']))
+                    print(e)
+
+        return diskDict

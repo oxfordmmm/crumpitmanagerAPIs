@@ -1,4 +1,5 @@
 logDir: '/var/log/CSbackups/progress'
+diskDir: '/var/log/CSbackups/disk'
 nanoporeOptions: {
   basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
   barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
@@ -36,7 +37,8 @@ clusterInfo: {
       sshUsername: 'nick@ndm.local',
       backupOrder: 1,
       storageLocation: '/mnt/microbio/Nanopore',
-      logDir: '/var/log/RESCOMPBackupLogs/progress'
+      logDir: '/var/log/RESCOMPBackupLogs/progress',
+      diskDir: '/var/log/RESCOMPBackupLogs/disk'
     },
     {
       name: 'RESCOMP',
