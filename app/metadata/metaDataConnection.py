@@ -179,7 +179,8 @@ class metaDataConnection:
         if splitMap:
             mapList = []
             for species in splitMap:
-                mapList.append({'taxID':int(species)})
+                speciesSplit = species.split(':')
+                mapList.append({'taxID':int(speciesSplit[0]), 'reference_path':speciesSplit[1]})
             
             for entry in mapList:
                 (queryText, valuesData) = self.__createInsertQuery(values=entry, fkID=runID, fkColumn='RunID')
@@ -270,7 +271,7 @@ class metaDataConnection:
         'off': 'No demultiplexing is required or demultiplexing will occur on the GridION.'}
 
         currentTaxIDs = self.__getCurrentMapIDs()
-        taxIDs = [485, 813, 1045]
+        taxIDs = [485, 813]
         for taxID in taxIDs:
             if taxID not in currentTaxIDs:
                 currentTaxIDs.append(taxID)
@@ -284,17 +285,20 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
             
             for row in self.cursor:
                 if row['sample_name'] in info:
-                    info[row['sample_name']]['mapping'] += ' ' + row['TaxID']
+                    if row['reference_path'] != None:
+                        info[row['sample_name']]['mapping'] += ' {}:{}'.format(row['TaxID'], row['reference_path'])
+                    else:
+                        info[row['sample_name']]['mapping'] += ' {}:'.format(row['TaxID'])
                 else:
                     info[row['sample_name']] = {'sample_name':row['sample_name'], 'RunID':row['RunID'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'] }
                     if row['TaxID'] == None:
@@ -303,16 +307,23 @@ class metaDataConnection:
                         else:
                             info[row['sample_name']]['mapping'] = 'on'
                     else:
-                        info[row['sample_name']]['mapping'] = row['TaxID']
+                        if row['reference_path'] != None:
+                            info[row['sample_name']]['mapping'] = '{}:{}'.format(row['TaxID'], row['reference_path'])
+                        else:
+                            info[row['sample_name']]['mapping'] = '{}:'.format(row['TaxID'])
             
             for (sample_name, run) in info.items():
                 if (not run['mapping'] == 'off') and (not run['mapping'] == 'on'):
                     mappingSort = run['mapping'].split(' ')
-                    mappingSortInt = []
-                    for taxID in mappingSort:
-                        mappingSortInt.append(int(taxID))
-                    mappingSortInt.sort()
-                    run['mapping'] = ' '.join(str(taxID) for taxID in mappingSortInt)
+                    mappingSortSplit = []
+                    for tax in mappingSort:
+                        taxSplit = tax.split(':')
+                        if len(taxSplit) > 1:
+                            mappingSortSplit.append((int(taxSplit[0]), taxSplit[1]))
+                        else:
+                            mappingSortSplit.append((int(taxSplit[0]), ''))
+                    mappingSortSplit.sort()
+                    run['mapping'] = ' '.join('{}:{}'.format(taxID, ref_path) for (taxID, ref_path) in mappingSortSplit)
                 
                 query = ("SELECT barcode, `Barcode`.ID_text AS sampleID, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE Run.ID_text = %s ORDER BY length(barcode), barcode;")
                 self.cursor.execute(query, (info[sample_name]['RunID'],))
