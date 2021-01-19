@@ -69,12 +69,13 @@ class metaDataConnection:
             self.resetSqlConnection()
 
         try:
-            query = ("SELECT DISTINCT TaxID FROM `Mapped Species` Order By TaxID;")
+            query = ("SELECT DISTINCT TaxID FROM `Mapped Species`;")
             self.cursor.execute(query)
 
             taxIDs = []
             for row in self.cursor:
-                taxIDs.append(int(row['TaxID']))
+                if row['TaxID'] != 'all':
+                    taxIDs.append(int(row['TaxID']))
             
             return taxIDs
         
@@ -116,6 +117,7 @@ class metaDataConnection:
     def __getMapInfo(self, post:dict):
         mapping = None
         splitMap = None
+        
         if 'map' not in post: 
             logging.debug('mapping is switched off for run {}'.format(post['sample_name']))
             mapping = False
@@ -177,10 +179,16 @@ class metaDataConnection:
         (mapping, splitMap) = self.__getMapInfo(post)
         
         if splitMap:
+            custom_refs = None
+            if ('custom_refs' in post):
+                custom_refs = post['custom_refs'].split()
+
             mapList = []
-            for species in splitMap:
-                speciesSplit = species.split(':')
-                mapList.append({'taxID':int(speciesSplit[0]), 'reference_path':speciesSplit[1]})
+            for i, species in enumerate(splitMap):
+                if custom_refs is None:
+                    mapList.append({'taxID':species})
+                else:
+                    mapList.append({'taxID':species, 'reference_path':custom_refs[i]})
             
             for entry in mapList:
                 (queryText, valuesData) = self.__createInsertQuery(values=entry, fkID=runID, fkColumn='RunID')
@@ -295,10 +303,9 @@ class metaDataConnection:
             
             for row in self.cursor:
                 if row['sample_name'] in info:
+                    info[row['sample_name']]['mapping'] += ' {}'.format(row['TaxID'])
                     if row['reference_path'] != None:
-                        info[row['sample_name']]['mapping'] += ' {}:{}'.format(row['TaxID'], row['reference_path'])
-                    else:
-                        info[row['sample_name']]['mapping'] += ' {}:'.format(row['TaxID'])
+                        info[row['sample_name']]['custom_refs'] += ' {}'.format(row['reference_path'])
                 else:
                     info[row['sample_name']] = {'sample_name':row['sample_name'], 'RunID':row['RunID'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'] }
                     if row['TaxID'] == None:
@@ -307,48 +314,58 @@ class metaDataConnection:
                         else:
                             info[row['sample_name']]['mapping'] = 'on'
                     else:
+                        info[row['sample_name']]['mapping'] = '{}'.format(row['TaxID'])
                         if row['reference_path'] != None:
-                            info[row['sample_name']]['mapping'] = '{}:{}'.format(row['TaxID'], row['reference_path'])
-                        else:
-                            info[row['sample_name']]['mapping'] = '{}:'.format(row['TaxID'])
+                            info[row['sample_name']]['custom_refs'] = '{}'.format(row['reference_path'])
             
             for (sample_name, run) in info.items():
-                if (not run['mapping'] == 'off') and (not run['mapping'] == 'on'):
-                    mappingSort = run['mapping'].split(' ')
-                    mappingSortSplit = []
-                    for tax in mappingSort:
-                        taxSplit = tax.split(':')
-                        if len(taxSplit) > 1:
-                            mappingSortSplit.append((int(taxSplit[0]), taxSplit[1]))
-                        else:
-                            mappingSortSplit.append((int(taxSplit[0]), ''))
-                    mappingSortSplit.sort()
-                    run['mapping'] = ' '.join('{}:{}'.format(taxID, ref_path) for (taxID, ref_path) in mappingSortSplit)
-                
-                query = ("SELECT barcode, `Barcode`.ID_text AS sampleID, name, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE Run.ID_text = %s ORDER BY length(barcode), barcode;")
+                query = ("SELECT barcode, b.ID_text AS sampleID, b.name, total_bases, total_reads, unclassified_bases, unclassified_reads, k.bases AS human_bases, k.sequenceReads as human_reads \
+                    FROM Run \
+                    JOIN Barcode AS b ON b.RunID = Run.ID \
+                    JOIN Kingdom AS k ON k.BarcodeID = b.ID \
+                    WHERE Run.ID_text = %s AND k.name = 'Human' \
+                    ORDER BY length(barcode), barcode")
                 self.cursor.execute(query, (info[sample_name]['RunID'],))
 
                 barcodes = []
                 for row in self.cursor:
-                    barcodes.append({"barcode":row['barcode'], "sampleID":row['sampleID'], "name":row['name'], "total_bases":row['total_bases'], "total_reads":row['total_reads'], "unclassified_bases":row['unclassified_bases'], "unclassified_reads":row['unclassified_reads']})
+                    barcodes.append(row)
                 
-                if name != None:
-                    query = ("SELECT b.ID_text as BarcodeID, TaxID as taxID, k.name AS kingdom_name, cs.bases, cs.sequenceReads as sequence_reads, cs.filtered  \
-                        FROM NanoporeMeta.`Classified Species` AS cs \
-                        JOIN NanoporeMeta.Kingdom as k ON cs.KingdomID = k.ID \
-                        JOIN NanoporeMeta.Barcode as b ON k.BarcodeID = b.ID \
-                        JOIN NanoporeMeta.Run as r ON b.RunID = r.ID \
-                        WHERE r.ID_text = %s and filtered = 1 \
-                        ORDER BY cs.bases DESC;")
+                if len(barcodes) == 0:
+                    query = ("SELECT barcode, b.ID_text AS sampleID, b.name, total_bases, total_reads, unclassified_bases, unclassified_reads \
+                        FROM Run \
+                        JOIN Barcode AS b ON b.RunID = Run.ID \
+                        WHERE Run.ID_text = %s \
+                        ORDER BY length(barcode), barcode")
                     self.cursor.execute(query, (info[sample_name]['RunID'],))
 
                     for row in self.cursor:
+                        row['human_reads'] = None
+                        row['human_bases'] = None
+                        barcodes.append(row)
+
+                if name != None:
+                    query = ("SELECT b.ID_text AS BarcodeID, TaxID AS taxID, cs.bases, cs.sequenceReads as sequence_reads \
+                        FROM `Classified Species` AS cs \
+                        JOIN Kingdom AS k ON cs.KingdomID = k.ID \
+                        JOIN Barcode AS b ON k.BarcodeID = b.ID \
+                        JOIN Run AS r ON b.RunID = r.ID \
+                        WHERE r.ID_text = %s \
+                        ORDER BY bases DESC")
+                    self.cursor.execute(query, (info[sample_name]['RunID'],))
+
+                    complete = True
+                    for row in self.cursor:
                         for barcode in barcodes:
                             if row['BarcodeID'] == barcode['sampleID']:
-                                if 'mapped_species' in barcode:
-                                    barcode['mapped_species'].append({"taxID": row['taxID'], "kingdom_name": row['kingdom_name'], "bases": row['bases'], "sequence_reads":row['sequence_reads'], "filtered":row['filtered']})
-                                else:
-                                    barcode['mapped_species'] = [{"taxID": row['taxID'], "kingdom_name": row['kingdom_name'], "bases": row['bases'], "sequence_reads":row['sequence_reads'], "filtered":row['filtered']}]
+                                if 'top_taxID' not in barcode:
+                                    barcode['top_taxID'] = {"taxID": row['taxID'], "bases": row['bases'], "sequence_reads":row['sequence_reads']}
+                            elif 'top_taxID' not in barcode:
+                                complete = False
+                        if complete:
+                            break
+                        else:
+                            complete = True
 
                 run['barcodes'] = barcodes
             
@@ -364,7 +381,13 @@ class metaDataConnection:
 
         try:
             if guid != None:
-                query = ("SELECT `Barcode`.ID_text AS 'sampleID', name, sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
+                query = ("SELECT barcode, b.ID_text AS sampleID, b.name, total_bases, total_reads, unclassified_bases, unclassified_reads, k.bases AS human_bases, k.sequenceReads as human_reads \
+                    FROM Run \
+                    JOIN Barcode AS b ON b.RunID = Run.ID \
+                    JOIN Kingdom AS k ON k.BarcodeID = b.ID \
+                    WHERE b.ID_text = %s AND k.name = 'Human';")
+
+                #query = ("SELECT `Barcode`.ID_text AS 'sampleID', name, sample_name as 'run_name', barcode, total_bases, total_reads, unclassified_bases, unclassified_reads FROM Run JOIN `Barcode` ON `Barcode`.RunID = Run.ID WHERE `Barcode`.ID_text = %s;")
                 self.cursor.execute(query, (guid,))
             else:
                 logging.exception("Need to request a specific sample GUID")
@@ -392,6 +415,52 @@ class metaDataConnection:
         except mysql.connector.Error as err:
             logging.exception("Could not access runs DB: {}".format(err))
             return -1
+
+    def getDepthStats(self, run_id: str=None, barcode_id: str=None):
+        if not self.activeConnection:
+            self.resetSqlConnection()
+
+        try:
+            if barcode_id != None:
+                query = ("SELECT `Depth Stats`.ID_text AS ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10 \
+                    FROM `Depth Stats` \
+                    JOIN Barcode ON `Depth Stats`.BarcodeID = Barcode.ID \
+                    WHERE Barcode.ID_text = %s \
+                    ORDER BY cov_avg DESC")
+                self.cursor.execute(query, (barcode_id,))
+            elif run_id != None:
+                query = ("SELECT `Depth Stats`.ID_text as ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10 \
+                    FROM `Depth Stats` \
+                    JOIN Barcode ON `Depth Stats`.BarcodeID = Barcode.ID \
+                    WHERE Barcode.RunID_text = %s \
+                    ORDER BY cov_avg DESC")
+                self.cursor.execute(query, (run_id,))
+            else:
+                logging.exception("Need to provide either a Run UUID or barcode/sample UUID")
+                return -1
+
+            results = []
+            for row in self.cursor:
+                row['cov_avg'] = float(row['cov_avg'])
+                row['cov_stdv'] = float(row['cov_stdv'])
+                row['cov_x1_percent'] = 0.0
+                row['cov_x5_percent'] = 0.0
+                row['cov_x10_percent'] = 0.0
+                
+                if row['x1'] > 0:
+                    row['cov_x1_percent'] = round(float(row['x1']/row['len'])*100.0, 2)
+                if row['x1'] > 0:
+                    row['cov_x5_percent'] = round(float(row['x5']/row['len'])*100.0, 2)
+                if row['x10'] > 0:
+                    row['cov_x10_percent'] = round(float(row['x10']/row['len'])*100.0,2)
+
+                results.append(row)
+
+            return results
+
+        except mysql.connector.Error as err:
+            logging.exception("Could not access depth stats DB: {}".format(err))
+            return None
 
     def addRun(self, post: dict):
         logging.info("Inserting Run {}".format(post['sample_name']))

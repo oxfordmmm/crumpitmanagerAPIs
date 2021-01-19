@@ -132,8 +132,15 @@ def getSpeciesFromTaxID(taxID):
         return str(taxID)
 
 def getSpeciesFromTaxIDs(taxIDs):
+    filteredIDs = []
+    for taxid in taxIDs:
+        try:
+            filteredIDs.append(int(taxid))
+        except ValueError:
+            logging.info('Filtered out an invalid TaxID {}'.format(taxid))
+
     ncbi = NCBITaxa()
-    taxid2name = ncbi.get_taxid_translator(taxIDs)
+    taxid2name = ncbi.get_taxid_translator(filteredIDs)
     return taxid2name
 
 setup_logging()
@@ -219,6 +226,24 @@ def getMetadataRunFields():
         for taxID in taxIDs:
             taxIDDict[taxID] = getSpeciesFromTaxID(taxID)
         returnDict['taxIDs'] = taxIDDict
+
+        returnDict['customRefs'] = []
+        customRefPath = cfg.get('clusterInfo')['customRefsLocation']
+        if customRefPath:
+            try:
+                fasta_ext = ['.fasta', '.fa', 'fas', 'fna']
+                compress_ext = ['.gz', '.gzip', '.gunzip']
+
+                returnDict['customRefs'] = []
+                for filepath in [f for f in os.listdir(customRefPath) if os.path.isfile(os.path.join(customRefPath, f))]:
+                    filename, ext = os.path.splitext(filepath)
+                    if ext in fasta_ext:
+                        returnDict['customRefs'].append(filepath)
+                    elif ext in compress_ext and os.path.splitext(filename)[1] in fasta_ext:
+                        returnDict['customRefs'].append(filepath)
+
+            except os.error:
+                logging.error("Error scanning custom reference directory")
         rs = [1, returnDict]
     except Exception as e:
         logger.debug(str(e))
@@ -287,6 +312,26 @@ def getMetadataBarcode(guid):
 
     return generateResponse(rs,200)  
 
+@app.route('/metadata/depthStats/run/<runID>',methods = ['GET'])
+def getMetadataDepthStatsByRun(runID):
+    try:
+        rs = [1, getMetadata().getDepthStats(run_id=runID)]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
+
+    return generateResponse(rs,200)
+
+@app.route('/metadata/depthStats/sample/<guid>',methods = ['GET'])
+def getMetadataDepthStatsBySample(guid):
+    try:
+        rs = [1, getMetadata().getDepthStats(barcode_id=guid)]
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to SQL db"]
+
+    return generateResponse(rs,200)
+
 @app.route('/taxid',methods = ['POST'])
 def getTaxConversions():
     if 'json' in request.headers['Content-Type']:
@@ -336,6 +381,18 @@ def getClusterInfo():
     remoteInfo = clusterInfo().getRemoteInfo(cfg.get('clusterInfo')['remoteStorage'])
     combinedInfo = {'localInfo': localInfo, 'remoteInfo': remoteInfo}
     rs = [1, combinedInfo]
+    return generateResponse(rs,200)
+
+@app.route('/customRefs',methods = ['GET'])
+def getCustomRefs():
+    customRefPath = cfg.get('clusterInfo')['customRefsLocation']
+    if customRefPath:
+        try:
+            return generateResponse([1, [f for f in os.listdir(customRefPath) if os.path.isfile(os.path.join(customRefPath, f))]], 200)
+        except os.error:
+            return generateResponse([-1,"Error scanning custom reference directory"])
+    else:
+        return generateResponse([-1,"No path for custom reference directory"])
     return generateResponse(rs,200)
 
 #input: result is an array

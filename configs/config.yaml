@@ -29,6 +29,7 @@ clusterInfo: {
     }
   ],
   storageLocation: '/mnt/nanostore',
+  customRefsLocation: '/mnt/nanostore/dbs/refseq/custom_refs',
   remoteStorage: [
     {
       name: 'CS',

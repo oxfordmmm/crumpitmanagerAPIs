@@ -40,6 +40,7 @@
         }
       },
       'storageLocation': {'type': 'string'},
+      'customRefsLocation': {'type': 'string'},
       'remoteStorage': {
         'required': False,
         'type': 'list',

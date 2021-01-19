@@ -8,13 +8,14 @@
 import itertools
 
 class nanoporeSeqOptions:
-    def __init__(self, basecallerFile: str, barcodeFile:str = None):
+    def __init__(self, basecallerFile: str, barcodeFile:str = None, customRefPath:str = None):
         self.flowcells = {}
         self.basecallerFile = basecallerFile
         self.barcodeFile = barcodeFile
         self.processBasecallers(self.basecallerFile)
         if barcodeFile != None:
             self.processBarcodes(self.barcodeFile)
+        self.customRefPath = customRefPath
         
     def processBasecallers(self, basecallerFile: str):
         with open(basecallerFile, 'r') as basecallersIO:

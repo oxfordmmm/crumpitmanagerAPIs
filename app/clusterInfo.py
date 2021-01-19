@@ -353,8 +353,8 @@ class clusterInfo:
                     if len(info[0]) > 0 and info[0] != '#':
                         try:
                             diskDict[info[0]] = {
-                                'f5s': int(info[1]) + int(info[2]),
-                                'basecalled_fastq': int(info[3]) + int(info[4])
+                                'basecalled_fastq': int(info[1]) + int(info[2]),
+                                'f5s': int(info[3]) + int(info[4])
                             }
                         except ValueError as e:
                             print("ERROR: Could not read line {} correctly, skipping".format(line))
