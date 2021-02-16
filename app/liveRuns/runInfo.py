@@ -50,7 +50,7 @@ class runInfo:
             df=pd.concat(dfs)
 
             df['process']=df.name.map(splitName)
-            df['time']=pd.to_timedelta(df['duration'],unit='s').astype('timedelta64[s]')
+            df['time']=pd.to_timedelta(df['duration']).astype('timedelta64[s]')
             c=df[df.status == 'COMPLETED'].groupby('process')['status'].count()
             c=c.reset_index()
 
