@@ -1,18 +1,18 @@
 logDir: '/var/log/CSbackups/progress'
 diskDir: '/var/log/CSbackups/disk'
 nanoporeOptions: {
-  basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
-  barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
+  basecallerFile: '/mnt/nanostore/soft/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
+  barcodeFile: '/mnt/nanostore/soft/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
 }
 flask: {
   port: 5607
 }
 mongoDB: { 
-  ip: '163.1.213.19',
+  ip: '192.168.1.81',
   port: 27017
 }
 sqlDB: {
-  ip: '163.1.213.19',
+  ip: '192.168.1.81',
   port: 3306,
 }
 clusterInfo: {
@@ -21,11 +21,6 @@ clusterInfo: {
       name: 'grid0',
       IP: '127.0.0.1',
       mountLocation: '/mnt/grid0'
-    },
-    {
-      name: 'grid1',
-      IP: '127.0.0.1',
-      mountLocation: '/mnt/grid1'
     }
   ],
   storageLocation: '/mnt/nanostore',
@@ -35,7 +30,7 @@ clusterInfo: {
       name: 'CS',
       IP: 'analysis1.mmmoxford.uk',
       port: 8081,
-      sshUsername: 'nick@ndm.local',
+      sshUsername: 'jez@ndm.local',
       backupOrder: 1,
       storageLocation: '/mnt/microbio/Nanopore',
       logDir: '/var/log/RESCOMPBackupLogs/progress',
