@@ -195,6 +195,41 @@ def getRunsGraph():
         rs = [0, "Could not create Image"]
         return generateResponse(rs, 500)
 
+@app.route('/liveRuns/graph/<runId>',methods = ['GET'])
+def getRunGraph(runId):
+    runsInfo = None
+    try:
+        runsInfo = getRunsInfo().getRuns()
+    except Exception as e:
+        logger.debug(str(e))
+        rs = [-1, "could not connect to mongo db"]
+        return generateResponse(rs, 200)
+
+    if runId in runsInfo:
+        try:
+            filename = runInfo(runsInfo[runId]).getBatchGraph()
+            if isinstance(filename, str):
+                runGraph = open(filename, 'rb')
+                image_read = runGraph.read()
+                image_64_encode = base64.encodestring(image_read)
+                image_64_string = image_64_encode.decode('utf-8')
+                imageDict = {
+                    "image" : image_64_string
+                }
+                rs = [1, imageDict]
+                return generateResponse(rs, 200)
+            else:
+                rs = [0, "Could not create Image"]
+                return generateResponse(rs, 500)
+        except Exception as e:
+            logger.debug(str(e))
+            rs = [0, "Could not create Image"]
+            return generateResponse(rs, 500)
+    else:
+        logger.debug("Not a valid Run")
+        rs = [0, "Not a valid Run"]
+        return generateResponse(rs, 500)
+
 @app.route('/liveRuns/liveStats',methods = ['GET'])
 def getLiveStats():
     try:

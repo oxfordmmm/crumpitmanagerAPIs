@@ -6,6 +6,7 @@
 #Date: May 2019
 
 import os
+import datetime
 
 import pandas as pd
 
@@ -92,3 +93,23 @@ class runInfo:
                 "processes" : {}
             }
         return output
+
+    def getBatchGraph(self):
+        f=os.listdir(self.run['cwd'])
+        f=[i for i in f if i.startswith('trace.txt')]
+        dfs=[]
+        for i in f:
+            dfs.append(pd.read_csv('{0}/{1}'.format(self.run['cwd'], i),sep='\t'))
+        df=pd.concat(dfs)
+
+        df['process']=df.name.map(splitName)
+        c=df[df.status == 'COMPLETED']
+        c['run_time']=pd.to_datetime(c.submit)
+        c=pd.DataFrame(c.run_time-c.run_time.min())
+        c = c.resample('T', on='run_time').count()
+
+        ax = c.plot()
+        fig = ax.get_figure()
+        fig.savefig("temp.png")
+        imgFilename = "temp.png"
+        return imgFilename
