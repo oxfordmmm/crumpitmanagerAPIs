@@ -11,6 +11,7 @@ import datetime
 from pymongo import MongoClient
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as pyp
 
 def splitName(r):
     return r.split(' ')[0]
@@ -105,14 +106,17 @@ class runInfo:
             b['Yield (bases)']=b['queryLength'].cumsum().astype(int)
             # Create a column of time in minute, for longer runs you can do the same with hours
             b['run_time']=pd.to_datetime(b.start_time)
-            b.run_time=((b.run_time-b.run_time.min())/ pd.Timedelta('1 hour')).astype(int)
+            b.run_time=(b.run_time-b.run_time.min())/ pd.Timedelta('1 hour')
             b2=b.sample(500)
 
             ax=sns.lineplot(x='run_time',y='Yield (bases)',data=b2)
             ax.ticklabel_format(style='plain', axis='y')
+            ax.set(xlabel="Run Time (hours)")
             fig = ax.get_figure()
             imgFilename = "images/{}-grid_bases.png".format(self.run['run_name'])
-            fig.savefig("images/{}-grid_bases.png".format(self.run['run_name']))
+            fig.savefig(imgFilename, bbox_inches = "tight")
+            pyp.close(fig)
+            
             return imgFilename
         except Exception as e:
             print(e)
@@ -135,9 +139,11 @@ class runInfo:
         c=c.rename(columns={"run_time":"batches"})
 
         ax = c.plot()
+        ax.set(xlabel="Run Time (minutes)", ylabel="Batches")
         fig = ax.get_figure()
         imgFilename = "images/{}-batches.png".format(self.run['run_name'])
-        fig.savefig("images/{}-batches.png".format(self.run['run_name']))
+        fig.savefig(imgFilename, bbox_inches = "tight")
+        pyp.close(fig)
         return imgFilename
     
     def getRunGraphs(self):
