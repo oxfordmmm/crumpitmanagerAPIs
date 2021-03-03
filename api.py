@@ -65,13 +65,25 @@ def getRunsInfo():
     try:
         mongoDBcfg = cfg.get('mongoDB')
     except Exception as e:
-        return runsInfo()       
+        return runsInfo()
     try:
         mongoDBcfg['port']
-    except Exception as e:    
+    except Exception as e:
         return runsInfo(mongoDBcfg['ip'])
     
     return runsInfo(mongoDBcfg['ip'], mongoDBcfg['port'])
+
+def getRunInfo(run):
+    try:
+        mongoDBcfg = cfg.get('mongoDB')
+    except Exception as e:
+        return runInfo(run)
+    try:
+        mongoDBcfg['port']
+    except Exception as e:
+        return runInfo(run, mongoDBcfg['ip'])
+    
+    return runInfo(run, mongoDBcfg['ip'], mongoDBcfg['port'])
 
 def getMetadata():
     try:
@@ -206,25 +218,23 @@ def getRunGraph(runId):
         return generateResponse(rs, 200)
 
     if runId in runsInfo:
-        try:
-            filename = runInfo(runsInfo[runId]).getBatchGraph()
-            if isinstance(filename, str):
-                runGraph = open(filename, 'rb')
-                image_read = runGraph.read()
-                image_64_encode = base64.encodestring(image_read)
-                image_64_string = image_64_encode.decode('utf-8')
-                imageDict = {
-                    "image" : image_64_string
-                }
-                rs = [1, imageDict]
-                return generateResponse(rs, 200)
-            else:
-                rs = [0, "Could not create Image"]
-                return generateResponse(rs, 500)
-        except Exception as e:
-            logger.debug(str(e))
-            rs = [0, "Could not create Image"]
-            return generateResponse(rs, 500)
+        filenames = getRunInfo(runsInfo[runId]).getRunGraphs()
+        imageDict = {}
+        for graph, filename in filenames.items():
+            try:
+                if isinstance(filename, str):
+                    runGraph = open(filename, 'rb')
+                    image_read = runGraph.read()
+                    image_64_encode = base64.encodestring(image_read)
+                    image_64_string = image_64_encode.decode('utf-8')
+                    imageDict[graph] = image_64_string
+                else:
+                    logger.debug("Could not create Image for run {}, graph {}".format(runId, graph))
+            except Exception as e:
+                logger.debug(str(e))
+                logger.debug("Could not create Image for run {}, graph {}".format(runId, graph))
+        rs = [1, imageDict]
+        return generateResponse(rs, 200)
     else:
         logger.debug("Not a valid Run")
         rs = [0, "Not a valid Run"]

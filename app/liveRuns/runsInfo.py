@@ -76,8 +76,8 @@ class runsInfo:
 
         ax = df.plot()
         fig = ax.get_figure()
-        fig.savefig("temp.png")
-        imgFilename = "temp.png"
+        fig.savefig("images/temp.png")
+        imgFilename = "images/temp.png"
         return imgFilename
 
     def getLiveRuns(self, timeFrame: int=7):

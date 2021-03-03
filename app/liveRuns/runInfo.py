@@ -8,14 +8,18 @@
 import os
 import datetime
 
+from pymongo import MongoClient
 import pandas as pd
+import seaborn as sns
 
 def splitName(r):
     return r.split(' ')[0]
 
 class runInfo:
-    def __init__(self,run: dict):
+    def __init__(self,run: dict, ip: str='127.0.0.1',port: int=27017):
         self.run=run
+        self.ip=ip
+        self.port=port
 
         self.batches=[]
         try:
@@ -94,6 +98,27 @@ class runInfo:
             }
         return output
 
+    def getGridBasesGraph(self):
+        try:
+            b=self.df.sort_values(by='start_time',ascending=True)
+            # calculate cumulative yeild of bases with cumsum()
+            b['Yield (bases)']=b['queryLength'].cumsum().astype(int)
+            # Create a column of time in minute, for longer runs you can do the same with hours
+            b['run_time']=pd.to_datetime(b.start_time)
+            b.run_time=((b.run_time-b.run_time.min())/ pd.Timedelta('1 hour')).astype(int)
+            b2=b.sample(500)
+
+            ax=sns.lineplot(x='run_time',y='Yield (bases)',data=b2)
+            ax.ticklabel_format(style='plain', axis='y')
+            fig = ax.get_figure()
+            imgFilename = "images/{}-grid_bases.png".format(self.run['run_name'])
+            fig.savefig("images/{}-grid_bases.png".format(self.run['run_name']))
+            return imgFilename
+        except Exception as e:
+            print(e)
+            print("Could not create grid bases graph for run {}".format(self.run['run_name']))
+            return "images/blank.png"
+
     def getBatchGraph(self):
         f=os.listdir(self.run['cwd'])
         f=[i for i in f if i.startswith('trace.txt')]
@@ -107,9 +132,31 @@ class runInfo:
         c['run_time']=pd.to_datetime(c.submit)
         c=pd.DataFrame(c.run_time-c.run_time.min())
         c = c.resample('T', on='run_time').count()
+        c=c.rename(columns={"run_time":"batches"})
 
         ax = c.plot()
         fig = ax.get_figure()
-        fig.savefig("temp.png")
-        imgFilename = "temp.png"
+        imgFilename = "images/{}-batches.png".format(self.run['run_name'])
+        fig.savefig("images/{}-batches.png".format(self.run['run_name']))
         return imgFilename
+    
+    def getRunGraphs(self):
+        client = MongoClient(self.ip, self.port)
+        db = client[self.run['run_name']]
+        collection = db.cent_stats
+        hce=collection.find()
+        log={}
+        for h in hce:
+            try:
+                log[h['start_time']] = h
+            except Exception as e:
+                print("Error: Could not load entry for run {}".format(self.run['run_name']))
+                print(e)
+        
+        df=pd.DataFrame(log)
+        self.df=df.transpose()
+
+        gridBasesFilename = self.getGridBasesGraph()
+        batchFilename = self.getBatchGraph()
+
+        return {'gridBases':gridBasesFilename, 'batches':batchFilename}
