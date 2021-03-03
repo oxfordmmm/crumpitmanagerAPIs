@@ -24,5 +24,7 @@ pyparsing
 python-dateutil
 pytz
 PyYAML
+scipy
+seaborn
 six
 Werkzeug
