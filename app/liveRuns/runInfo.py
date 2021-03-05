@@ -99,7 +99,7 @@ class runInfo:
             }
         return output
 
-    def getGridBasesGraph(self):
+    def __getGridBasesGraph(self):
         try:
             b=self.df.sort_values(by='start_time',ascending=True)
             # calculate cumulative yeild of bases with cumsum()
@@ -123,7 +123,7 @@ class runInfo:
             print("Could not create grid bases graph for run {}".format(self.run['run_name']))
             return "images/blank.png"
 
-    def getBatchGraph(self):
+    def __getBatchGraph(self):
         f=os.listdir(self.run['cwd'])
         f=[i for i in f if i.startswith('trace.txt')]
         dfs=[]
@@ -135,18 +135,18 @@ class runInfo:
         c=df[df.status == 'COMPLETED']
         c['run_time']=pd.to_datetime(c.submit)
         c=pd.DataFrame(c.run_time-c.run_time.min())
-        c = c.resample('T', on='run_time').count()
-        c=c.rename(columns={"run_time":"batches"})
+        c = c.resample('H', on='run_time').count()
+        c=c.rename(columns={"run_time":"batches"}, index=lambda t: (t.total_seconds()/3600)+1 )
 
-        ax = c.plot()
-        ax.set(xlabel="Run Time (minutes)", ylabel="Batches")
+        ax = c.plot(kind='bar')
+        ax.set(xlabel="Run Time (Hours)", ylabel="Batches")
         fig = ax.get_figure()
         imgFilename = "images/{}-batches.png".format(self.run['run_name'])
         fig.savefig(imgFilename, bbox_inches = "tight")
         pyp.close(fig)
         return imgFilename
     
-    def getRunGraphs(self):
+    def generateRunGraphs(self):
         client = MongoClient(self.ip, self.port)
         db = client[self.run['run_name']]
         collection = db.cent_stats
@@ -162,7 +162,20 @@ class runInfo:
         df=pd.DataFrame(log)
         self.df=df.transpose()
 
-        gridBasesFilename = self.getGridBasesGraph()
-        batchFilename = self.getBatchGraph()
+        gridBasesFilename = self.__getGridBasesGraph()
+        batchFilename = self.__getBatchGraph()
 
-        return {'gridBases':gridBasesFilename, 'batches':batchFilename}
+        return {'grid_bases':gridBasesFilename, 'batches':batchFilename}
+    
+    def getRunGraphs(self):
+        graph_types = ['batches', 'grid_bases']
+        graph_files = {}
+
+        for graph in graph_types:
+            file_name = "images/{}-{}.png".format(self.run['run_name'], graph)
+            if os.path.isfile(file_name):
+                graph_files[graph] = file_name
+            else:
+                graph_files[graph] = "images/blank.png"
+
+        return graph_files
