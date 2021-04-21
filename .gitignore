@@ -7,5 +7,6 @@ taxdump.tar.gz
 *.log
 *.csv
 *.png
+images/tmp/*
 !images/blank.png
 *.tab

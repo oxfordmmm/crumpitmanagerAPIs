@@ -4,6 +4,7 @@ nanoporeOptions: {
   basecallerFile: '/home/mmmnano/crumpitmanagerAPIs/data/basecaller_workflows_4.2.2.txt',
   barcodeFile: '/home/mmmnano/crumpitmanagerAPIs/data/barcoder_kits_4.2.2.txt'
 }
+singImg: '/mnt/nanostore/soft/images/crumpit_3-0.simg'
 flask: {
   port: 5607
 }

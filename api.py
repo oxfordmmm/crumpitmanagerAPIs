@@ -208,7 +208,7 @@ def getRunsGraph():
         return generateResponse(rs, 500)
 
 @app.route('/liveRuns/graph/<runId>',methods = ['GET'])
-def getRunGraph(runId):
+def getLiveRunGraph(runId):
     runsInfo = None
     try:
         runsInfo = getRunsInfo().getRuns()
@@ -356,6 +356,38 @@ def getMetadataBarcode(guid):
         rs = [-1, "could not connect to SQL db"]
 
     return generateResponse(rs,200)  
+
+@app.route('/metadata/graph/<runName>',methods = ['GET'])
+def getMetaRunGraph(runName):
+    if runName in getMetadata().getPreRunInfo().keys():
+        file_name = "images/{}-depth.png".format(runName)
+        if not os.path.isfile(file_name):
+            file_name = "images/blank.png"
+
+        try:
+            if isinstance(file_name, str):
+                runGraph = open(file_name, 'rb')
+                image_read = runGraph.read()
+                image_64_encode = base64.encodestring(image_read)
+                image_64_string = image_64_encode.decode('utf-8')
+                imageDict = {
+                    "image" : image_64_string
+                }
+                rs = [1, imageDict]
+                return generateResponse(rs, 200)
+            else:
+                logger.debug("Could not create Image for run {} graph depth".format(runName))
+                rs = [0, "Could not create Image for run {}, graph depth"]
+                return generateResponse(rs, 200)
+        except Exception as e:
+            logger.debug(str(e))
+            logger.debug("Could not create Image for run {}, graph depth".format(runName))
+            rs = [0, "Could not create Image for run {}, graph depth"]
+            return generateResponse(rs, 200)
+    else:
+        logger.debug("Not a valid Run")
+        rs = [0, "Not a valid Run"]
+        return generateResponse(rs, 500)
 
 @app.route('/metadata/depthStats/run/<runID>',methods = ['GET'])
 def getMetadataDepthStatsByRun(runID):

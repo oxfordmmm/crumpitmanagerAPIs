@@ -293,10 +293,10 @@ class metaDataConnection:
 
         try:
             if name != None:
-                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path, base_dir FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID WHERE sample_name = %s;")
                 self.cursor.execute(query, (name,))
             else:
-                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
+                query = ("SELECT Run.ID_text AS RunID, sample_name, run_date, basecalling, porechop, flow, seq_kit, bar_kit, wash_number, watch_hours, map AS mapping, TaxID, reference_path, base_dir FROM Run LEFT JOIN `Mapped Species` ON `Mapped Species`.RunID = Run.ID;")
                 self.cursor.execute(query)
 
             info = {}
@@ -307,7 +307,7 @@ class metaDataConnection:
                     if row['reference_path'] != None:
                         info[row['sample_name']]['custom_refs'] += ' {}'.format(row['reference_path'])
                 else:
-                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'RunID':row['RunID'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'] }
+                    info[row['sample_name']] = {'sample_name':row['sample_name'], 'RunID':row['RunID'], 'run_date':row['run_date'], 'basecalling':row['basecalling'], 'porechop':row['porechop'], 'flow':row['flow'], 'seq_kit':row['seq_kit'], 'bar_kit':row['bar_kit'], 'wash_number':row['wash_number'], 'watch_hours':row['watch_hours'], 'base_dir':row['base_dir'] }
                     if row['TaxID'] == None:
                         if row['mapping'] == '0':
                             info[row['sample_name']]['mapping'] = 'off'
