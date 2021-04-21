@@ -121,6 +121,8 @@ class graphGenerator:
                                 meta_start = time.time()
                                 plot_depth_by_barcode.run(run_name, ref_path=os.path.join(customRefPath, run_data['custom_refs']), fq_path=fq_path, sing_img=singImg, ref_name=run_data['custom_refs'], out_dir='images/')
                                 print('Finished meta graphs for run {} in {:.2f} seconds'.format(run_name, time.time() - meta_start))
+                            else:
+                                print("fastqs not avalable for meta graphs of run {}, exiting.".format(run_name))
                 else:
                     print("graph already exists for run {}, exiting.".format(run_name))
             else:
