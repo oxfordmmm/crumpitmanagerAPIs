@@ -443,10 +443,10 @@ class metaDataConnection:
             for row in self.cursor:
                 row['cov_avg'] = float(row['cov_avg'])
                 row['cov_stdv'] = float(row['cov_stdv'])
-                row['cov_x1_percent'] = 0.0
-                row['cov_x5_percent'] = 0.0
-                row['cov_x10_percent'] = 0.0
-                row['cov_x20_percent'] = 0.0
+                row['cov_x1_percent'] = None
+                row['cov_x5_percent'] = None
+                row['cov_x10_percent'] = None
+                row['cov_x20_percent'] = None
                 
                 if row['x1'] != None and row['x1'] > 0:
                     row['cov_x1_percent'] = round(float(row['x1']/row['len'])*100.0, 2)
