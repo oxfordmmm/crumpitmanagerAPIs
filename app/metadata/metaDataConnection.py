@@ -448,13 +448,13 @@ class metaDataConnection:
                 row['cov_x10_percent'] = 0.0
                 row['cov_x20_percent'] = 0.0
                 
-                if row['x1'] > 0:
+                if row['x1'] != None and row['x1'] > 0:
                     row['cov_x1_percent'] = round(float(row['x1']/row['len'])*100.0, 2)
-                if row['x1'] > 0:
+                if row['x5'] != None and row['x5'] > 0:
                     row['cov_x5_percent'] = round(float(row['x5']/row['len'])*100.0, 2)
-                if row['x10'] > 0:
+                if row['x10'] != None and row['x10'] > 0:
                     row['cov_x10_percent'] = round(float(row['x10']/row['len'])*100.0,2)
-                if row['x20'] > 0:
+                if row['x20'] != None and row['x20'] > 0:
                     row['cov_x20_percent'] = round(float(row['x20']/row['len'])*100.0,2)
 
                 results.append(row)
