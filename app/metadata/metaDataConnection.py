@@ -422,14 +422,14 @@ class metaDataConnection:
 
         try:
             if barcode_id != None:
-                query = ("SELECT `Depth Stats`.ID_text AS ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10 \
+                query = ("SELECT `Depth Stats`.ID_text AS ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10, x20 \
                     FROM `Depth Stats` \
                     JOIN Barcode ON `Depth Stats`.BarcodeID = Barcode.ID \
                     WHERE Barcode.ID_text = %s \
                     ORDER BY cov_avg DESC")
                 self.cursor.execute(query, (barcode_id,))
             elif run_id != None:
-                query = ("SELECT `Depth Stats`.ID_text as ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10 \
+                query = ("SELECT `Depth Stats`.ID_text as ID, barcode, TaxID AS taxID, chrom, cov_avg, cov_stdv, len, x1, x5, x10, x20 \
                     FROM `Depth Stats` \
                     JOIN Barcode ON `Depth Stats`.BarcodeID = Barcode.ID \
                     WHERE Barcode.RunID_text = %s \
@@ -446,6 +446,7 @@ class metaDataConnection:
                 row['cov_x1_percent'] = 0.0
                 row['cov_x5_percent'] = 0.0
                 row['cov_x10_percent'] = 0.0
+                row['cov_x20_percent'] = 0.0
                 
                 if row['x1'] > 0:
                     row['cov_x1_percent'] = round(float(row['x1']/row['len'])*100.0, 2)
@@ -453,6 +454,8 @@ class metaDataConnection:
                     row['cov_x5_percent'] = round(float(row['x5']/row['len'])*100.0, 2)
                 if row['x10'] > 0:
                     row['cov_x10_percent'] = round(float(row['x10']/row['len'])*100.0,2)
+                if row['x20'] > 0:
+                    row['cov_x20_percent'] = round(float(row['x20']/row['len'])*100.0,2)
 
                 results.append(row)
 
