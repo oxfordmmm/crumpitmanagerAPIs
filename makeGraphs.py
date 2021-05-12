@@ -73,7 +73,7 @@ class graphGenerator:
                 except Exception as e:
                     print("Error producing graph for run {}".format(runName))
                     print(e)
-
+            print("Finished live graphs")
         except KeyboardInterrupt as e:
             raise e
         except Exception as e:
@@ -90,13 +90,15 @@ class graphGenerator:
                 if not os.path.exists(f'images/{run_name}-depth.png'):
                     if 'custom_refs' in run_data and run_name not in liveRuns.keys():
                         run_ref = os.path.join(customRefPath, run_data['custom_refs'])
-                        if os.path.exists(run_ref):
+                        if run_data['base_dir'] and os.path.exists(run_ref):
                             fq_path = os.path.join('/', *run_data['base_dir'].split('/')[:-1], 'basecalled_fastq')
                             if os.path.isdir(fq_path):
                                 print('Starting meta graphs for run {}'.format(run_name))
                                 meta_start = time.time()
                                 plot_depth_by_barcode.run(run_name, ref_path=os.path.join(customRefPath, run_data['custom_refs']), fq_path=fq_path, sing_img=singImg, ref_name=run_data['custom_refs'], out_dir='images/')
                                 print('Finished meta graphs for run {} in {:.2f} seconds'.format(run_name, time.time() - meta_start))
+            
+            print("Finished post run graphs")
         except KeyboardInterrupt as e:
             raise e
         except Exception as e:

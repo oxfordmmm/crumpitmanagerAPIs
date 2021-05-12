@@ -222,7 +222,7 @@ def getLiveRunGraph(runId):
         imageDict = {}
         for graph, filename in filenames.items():
             try:
-                if isinstance(filename, str):
+                if filename and isinstance(filename, str):
                     runGraph = open(filename, 'rb')
                     image_read = runGraph.read()
                     image_64_encode = base64.encodestring(image_read)
@@ -230,9 +230,11 @@ def getLiveRunGraph(runId):
                     imageDict[graph] = image_64_string
                 else:
                     logger.debug("Could not create Image for run {}, graph {}".format(runId, graph))
+                    imageDict[graph] = None
             except Exception as e:
                 logger.debug(str(e))
                 logger.debug("Could not create Image for run {}, graph {}".format(runId, graph))
+                imageDict[graph] = None
         rs = [1, imageDict]
         return generateResponse(rs, 200)
     else:
@@ -362,7 +364,9 @@ def getMetaRunGraph(runName):
     if runName in getMetadata().getPreRunInfo().keys():
         file_name = "images/{}-depth.png".format(runName)
         if not os.path.isfile(file_name):
-            file_name = "images/blank.png"
+            logger.debug("No graph available for run {}".format(runName))
+            rs = [0, "No graph available for run {}".format(runName)]
+            return generateResponse(rs, 200)
 
         try:
             if isinstance(file_name, str):

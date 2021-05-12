@@ -121,30 +121,35 @@ class runInfo:
         except Exception as e:
             print(e)
             print("Could not create grid bases graph for run {}".format(self.run['run_name']))
-            return "images/blank.png"
+            return None
 
     def __getBatchGraph(self):
-        f=os.listdir(self.run['cwd'])
-        f=[i for i in f if i.startswith('trace.txt')]
-        dfs=[]
-        for i in f:
-            dfs.append(pd.read_csv('{0}/{1}'.format(self.run['cwd'], i),sep='\t'))
-        df=pd.concat(dfs)
+        try:
+            f=os.listdir(self.run['cwd'])
+            f=[i for i in f if i.startswith('trace.txt')]
+            dfs=[]
+            for i in f:
+                dfs.append(pd.read_csv('{0}/{1}'.format(self.run['cwd'], i),sep='\t'))
+            df=pd.concat(dfs)
 
-        df['process']=df.name.map(splitName)
-        c=df[df.status == 'COMPLETED']
-        c['run_time']=pd.to_datetime(c.submit)
-        c=pd.DataFrame(c.run_time-c.run_time.min())
-        c = c.resample('H', on='run_time').count()
-        c=c.rename(columns={"run_time":"batches"}, index=lambda t: (t.total_seconds()/3600)+1 )
+            df['process']=df.name.map(splitName)
+            c=df[df.status == 'COMPLETED']
+            c['run_time']=pd.to_datetime(c.submit)
+            c=pd.DataFrame(c.run_time-c.run_time.min())
+            c = c.resample('H', on='run_time').count()
+            c=c.rename(columns={"run_time":"batches"}, index=lambda t: (t.total_seconds()/3600)+1 )
 
-        ax = c.plot(kind='bar')
-        ax.set(xlabel="Run Time (Hours)", ylabel="Batches")
-        fig = ax.get_figure()
-        imgFilename = "images/{}-batches.png".format(self.run['run_name'])
-        fig.savefig(imgFilename, bbox_inches = "tight")
-        pyp.close(fig)
-        return imgFilename
+            ax = c.plot(kind='bar')
+            ax.set(xlabel="Run Time (Hours)", ylabel="Batches")
+            fig = ax.get_figure()
+            imgFilename = "images/{}-batches.png".format(self.run['run_name'])
+            fig.savefig(imgFilename, bbox_inches = "tight")
+            pyp.close(fig)
+            return imgFilename
+        except Exception as e:
+            print(e)
+            print("Could not create batches graph for run {}".format(self.run['run_name']))
+            return None
     
     def generateRunGraphs(self):
         client = MongoClient(self.ip, self.port)
@@ -176,6 +181,6 @@ class runInfo:
             if os.path.isfile(file_name):
                 graph_files[graph] = file_name
             else:
-                graph_files[graph] = "images/blank.png"
+                graph_files[graph] = None
 
         return graph_files
