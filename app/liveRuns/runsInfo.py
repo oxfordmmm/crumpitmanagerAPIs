@@ -8,6 +8,8 @@
 import sys
 import os
 import datetime
+import re
+import collections
 
 import matplotlib
 matplotlib.use('Agg')
@@ -97,6 +99,31 @@ class runsInfo:
             print("Error: Could not find Live Stats")
 
         return df.to_dict('index')
+
+    def getProjects(self):
+        allRuns = self.getRuns()
+
+        projects = {}
+        for run in allRuns:
+            project = run.rsplit('_',1)[0]
+            if project in projects:
+                projects[project].append(run)
+            else:
+                projects[project] = [run]
+        
+        # Some code for auto incrementing runs before reliasing that the number can be elsewhere in the run name 
+        incremental_regex = re.compile("_[0-9]{1,3}$")
+        returnProjects = {}
+        #iterableProjects = {}
+        # Only add to list if there's > 1 run
+        for project, projectList in {key:value for (key, value) in projects.items() if len(value) > 1}.items():
+            # Sort by incremental number at end of run name if all run names are int only. Otherwise sort by text only.
+            if len(list(filter(incremental_regex.search, projectList))) == len(projectList):
+                returnProjects[project] = [project + "_" + str(num) for num in sorted([int(i.rsplit('_',1)[1]) for i in projectList])]
+                #iterableProjects[project] = returnProjects[project][-1].rsplit('_',1)[1]
+            else:
+                returnProjects[project] = sorted(projectList)
+        return collections.OrderedDict(sorted(returnProjects.items(), key=lambda x: x[0].lower()))
 
 if __name__ == '__main__':
     print(runsInfo().getLiveStats())

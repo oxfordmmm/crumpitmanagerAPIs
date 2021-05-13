@@ -291,6 +291,12 @@ def getMetadataRunFields():
 
             except os.error:
                 logging.error("Error scanning custom reference directory")
+        
+        try:
+            returnDict['projects'] = getRunsInfo().getProjects()
+        except Exception as e:
+            logging.error("Error reading project names")
+            print(e)
         rs = [1, returnDict]
     except Exception as e:
         logger.debug(str(e))
