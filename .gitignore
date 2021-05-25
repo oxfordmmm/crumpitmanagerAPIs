@@ -10,3 +10,4 @@ taxdump.tar.gz
 images/tmp/*
 !images/blank.png
 *.tab
+*.egg-info
