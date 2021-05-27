@@ -3,6 +3,7 @@ bcrypt
 Cerberus
 cffi
 Click
+coverage
 cryptography
 cycler
 ete3
@@ -23,6 +24,7 @@ PyNaCl
 pyparsing
 python-dateutil
 pytest
+pytest-cov
 pytz
 PyYAML
 scipy
