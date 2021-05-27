@@ -16,3 +16,5 @@ unit_tests:
     when: always
     reports:
       junit: report.xml
+    reports:
+      cobertura: coverage.xml
