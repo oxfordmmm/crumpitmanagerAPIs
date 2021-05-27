@@ -9,11 +9,11 @@ flask: {
   port: 5607
 }
 mongoDB: { 
-  ip: '127.0.0.1',
+  ip: 'ci_mongo',
   port: 27017
 }
 sqlDB: {
-  ip: '127.0.0.1',
+  ip: 'ci_sql',
   port: 3306,
 }
 clusterInfo: {
