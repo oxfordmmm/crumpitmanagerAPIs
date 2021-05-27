@@ -1,13 +1,15 @@
-api_nose:
+unit_tests:
   stage: test
   image: python:3.6
   services:
       - name: jezsw/crumpit_mongo
       - name: jezsw/crumpit_sql
   script:
+    - mkdir -p ~/grid0 ~/log/CSbackups/progress ~/log/CSbackups/disk ~/images ~/nanostore/dbs/refseq/custom_refs
     - pip install -r requirements.txt
     - pip install -e .
-    - pytest  --junitxml=report.xml
+    - pytest --cov=crumpitmanagerapi --junitxml=report.xml
+    - coverage xml
   artifacts:
     when: always
     reports:

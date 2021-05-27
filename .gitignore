@@ -12,3 +12,6 @@ images/tmp/*
 *.tab
 *.egg-info
 report.xml
+.coverage
+.coverage.*
+coverage.xml

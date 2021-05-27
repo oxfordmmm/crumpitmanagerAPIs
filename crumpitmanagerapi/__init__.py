@@ -53,10 +53,13 @@ def setup_logging():
     logger.addHandler(f_handler)
     logger.addHandler(c_handler)
 
-def reload_cfg():
+def reload_cfg(testing=False):
     global configFile
     global cfg
-    configFile = pathlib.Path("configs/config.yaml")
+    if testing:
+        configFile = pathlib.Path("configs/config-testing.yaml")
+    else:
+        configFile = pathlib.Path("configs/config.yaml")
 
     cfg = crumpitmanagerapi.config.Config()
     cfg.load(str(configFile))
@@ -173,11 +176,11 @@ def generateResponse(result, statusCode = None):
     resp.status_code = statusCode		
     return resp
 
-def create_app():
+def create_app(testing=False):
     setup_logging()
     logger = logging.getLogger('api')
     logger.debug("Logging initialized")
-    reload_cfg()
+    reload_cfg(testing)
 
     app = Flask(__name__)
 
