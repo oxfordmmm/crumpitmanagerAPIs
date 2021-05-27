@@ -19,7 +19,7 @@ import numpy as np
 
 from pymongo import MongoClient
 
-from app.liveRuns.runInfo import *
+from crumpitmanagerapi.liveRuns.runInfo import *
 
 class runsInfo:
     def __init__(self,ip: str='127.0.0.1',port: int=27017):

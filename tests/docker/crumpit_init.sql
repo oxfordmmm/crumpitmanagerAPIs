@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS `NanoporeMeta`;
+CREATE USER 'crumpit'@'%' IDENTIFIED BY 'CrumpitUserP455!';
+GRANT INSERT, SELECT, UPDATE ON `NanoporeMeta`.* TO 'crumpit'@'%';
+FLUSH PRIVILEGES;
+

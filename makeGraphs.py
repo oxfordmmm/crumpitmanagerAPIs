@@ -6,9 +6,9 @@ from threading import Thread
 import os.path
 import argparse
 
-import app.config
-from app.liveRuns.runsInfo import *
-from app.metadata.metaDataConnection import *
+import crumpitmanagerapi.config
+from crumpitmanagerapi.liveRuns.runsInfo import *
+from crumpitmanagerapi.metadata.metaDataConnection import *
 from graphs.plot_depth_by_barcode import *
 
 class graphGenerator:
@@ -19,7 +19,7 @@ class graphGenerator:
     def reload_cfg(self):
         configFile = pathlib.Path("configs/config.yaml")
 
-        self.cfg = app.config.Config()
+        self.cfg = crumpitmanagerapi.config.Config()
         self.cfg.load(str(configFile))
 
     def getMetadata(self):

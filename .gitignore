@@ -10,3 +10,8 @@ taxdump.tar.gz
 images/tmp/*
 !images/blank.png
 *.tab
+*.egg-info
+report.xml
+.coverage
+.coverage.*
+coverage.xml

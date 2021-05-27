@@ -12,8 +12,15 @@ import shlex
 import datetime
 
 import yaml
-import app.validateYAML
+import cerberus
 
+class validateYAML:
+    def validate_yaml(self, schemaFile: str, yamlFile: str):
+        schema = eval(open(schemaFile, 'r').read())
+        v = cerberus.Validator(schema)
+        doc = yaml.safe_load(open(yamlFile, 'r').read())
+        r = v.validate(doc, schema)
+        return r, v.errors
 class Config:
     """
     Configuration parsed directly from a YAML file
@@ -23,7 +30,7 @@ class Config:
 
     def load(self, config_file: str):
         try:
-            validator = app.validateYAML.validateYAML()
+            validator = validateYAML()
             ok, errs = validator.validate_yaml('configs/schema.yaml', config_file)
             if ok:
                 print(config_file, "validated")

@@ -5,7 +5,7 @@ import uuid
 from dateutil.parser import parse
 import bson.int64
 
-from app.nanoporeSeqOptions import *
+from crumpitmanagerapi.nanoporeSeqOptions import *
 
 class metaDataConnection:
     def __init__(self, ip='localhost', port=3306, user='crumpit', password='CrumpitUserP455!', database='NanoporeMeta', use_pure=True):
