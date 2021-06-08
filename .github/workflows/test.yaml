@@ -16,9 +16,13 @@ jobs:
       ci_mongo:
         # Docker Hub image
         image: jezsw/crumpit_mongo
+        ports:
+          - 27017:27017
       ci_sql:
         # Docker Hub image
         image: jezsw/crumpit_sql
+        ports:
+          - 3306:3306
 
     steps:
       - uses: actions/checkout@v2
