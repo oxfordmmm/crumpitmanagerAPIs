@@ -1,0 +1,44 @@
+name: GitHub CD Pipeline
+
+on: [push]
+
+jobs:
+  container-job:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8]
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      ci_mongo:
+        # Docker Hub image
+        image: jezsw/crumpit_mongo
+      ci_sql:
+        # Docker Hub image
+        image: jezsw/crumpit_sql
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          mkdir -p ~/grid0 ~/log/CSbackups/progress ~/log/CSbackups/disk ~/images ~/nanostore/dbs/refseq/custom_refs
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      # - name: Lint with flake8
+      #   run: |
+      #     # stop the build if there are Python syntax errors or undefined names
+      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with pytest
+        run: |
+          pytest --cov=crumpitmanagerapi --junitxml=report.xml
+          coverage xml
