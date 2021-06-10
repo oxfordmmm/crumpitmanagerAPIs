@@ -17,8 +17,13 @@ before_install:
 - docker pull jezsw/crumpit_sql
 - docker run -d -p 27017:27017 --rm jezsw/crumpit_mongo
 - docker run -d -p 3306:3306 --rm jezsw/crumpit_sql
-- sleep 60
+- sleep 30
 - docker ps -a
+
+# command to install dependencies
+install:
+- pip install -r requirements.txt
+- pip install -e .
 
 script:
 - pytest --cov=crumpitmanagerapi --junitxml=report.xml
