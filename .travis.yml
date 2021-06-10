@@ -14,8 +14,10 @@ services:
 
 before_install:
 - docker pull jezsw/crumpit_mongo
-- docker run -p 3306:3306 --rm jezsw/crumpit_mongo
-- docker run -p 27017:27017 --rm jezsw/crumpit_mongo
+- docker pull jezsw/crumpit_sql
+- docker run -d -p 27017:27017 --rm jezsw/crumpit_mongo
+- docker run -d -p 3306:3306 --rm jezsw/crumpit_sql
+- sleep 60
 - docker ps -a
 
 script:
