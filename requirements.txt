@@ -14,7 +14,7 @@ kiwisolver
 MarkupSafe
 matplotlib
 mysql-connector-python
-numpy
+numpy>=1.16.5
 pandas
 paramiko
 protobuf
