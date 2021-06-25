@@ -50,3 +50,7 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           fail_ci_if_error: true
+      - name: Run FOSSA scan and upload build data
+        uses: fossa-contrib/fossa-action@v1
+        with:
+          fossa-api-key: ${{ secrets.FOSSA_API_KEY }}
